@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="strawBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCFAF5"/>
+      <stop offset="100%" stop-color="#FCEEEA"/>
+    </linearGradient>
+    <linearGradient id="creamGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FFF8F2"/>
+    </linearGradient>
+    <linearGradient id="strawGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF4D6D"/>
+      <stop offset="100%" stop-color="#C9184A"/>
+    </linearGradient>
+    <filter id="shadow5" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4A2A20" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="450" rx="16" fill="url(#strawBg)"/>
+  <circle cx="300" cy="240" r="190" fill="#FFF2EE" opacity="0.6"/>
+
+  <!-- Stand -->
+  <g filter="url(#shadow5)">
+    <ellipse cx="300" cy="385" rx="100" ry="14" fill="#D8C8B5"/>
+    <ellipse cx="300" cy="380" rx="90" ry="12" fill="#FFFFFF"/>
+    <path d="M280 340 L285 380 L315 380 L320 340 Z" fill="#E6DAD0"/>
+    <ellipse cx="300" cy="344" rx="180" ry="24" fill="#C9B59E"/>
+    <ellipse cx="300" cy="340" rx="180" ry="22" fill="#FFFFFF"/>
+    <ellipse cx="300" cy="338" rx="165" ry="18" fill="#FFFDF9"/>
+  </g>
+
+  <!-- Cake Body: Pure Hokkaido White Cream -->
+  <g filter="url(#shadow5)">
+    <path d="M180 230 C180 280 180 300 180 320 C180 340 420 340 420 320 L420 230 Z" fill="url(#creamGrad)"/>
+    <ellipse cx="300" cy="230" rx="120" ry="24" fill="#FFFFFF"/>
+    
+    <!-- Mid-layer Strawberry Jam & Fresh Slice Rim -->
+    <path d="M180 275 Q300 295 420 275 L420 285 Q300 305 180 285 Z" fill="#FF758F" opacity="0.4"/>
+    <!-- Fresh strawberry slices peek through side -->
+    <ellipse cx="230" cy="285" rx="12" ry="7" fill="#E63946"/>
+    <ellipse cx="230" cy="285" rx="7" ry="4" fill="#FFA5AB"/>
+    <ellipse cx="300" cy="292" rx="12" ry="7" fill="#E63946"/>
+    <ellipse cx="300" cy="292" rx="7" ry="4" fill="#FFA5AB"/>
+    <ellipse cx="370" cy="285" rx="12" ry="7" fill="#E63946"/>
+    <ellipse cx="370" cy="285" rx="7" ry="4" fill="#FFA5AB"/>
+  </g>
+
+  <!-- Top Fresh Whole Strawberries & Cream Dollops -->
+  <g>
+    <!-- Rosettes / Whipped Cream Swirls -->
+    <circle cx="210" cy="225" r="14" fill="#FFFFFF" filter="url(#shadow5)"/>
+    <circle cx="250" cy="235" r="14" fill="#FFFFFF" filter="url(#shadow5)"/>
+    <circle cx="300" cy="238" r="14" fill="#FFFFFF" filter="url(#shadow5)"/>
+    <circle cx="350" cy="235" r="14" fill="#FFFFFF" filter="url(#shadow5)"/>
+    <circle cx="390" cy="225" r="14" fill="#FFFFFF" filter="url(#shadow5)"/>
+
+    <!-- Fresh Strawberries Crown -->
+    <!-- Left -->
+    <path d="M230 190 C215 190 210 210 230 228 C250 210 245 190 230 190 Z" fill="url(#strawGrad)"/>
+    <!-- Center -->
+    <path d="M300 175 C280 175 275 200 300 222 C325 200 320 175 300 175 Z" fill="url(#strawGrad)"/>
+    <!-- Right -->
+    <path d="M370 190 C355 190 350 210 370 228 C390 210 385 190 370 190 Z" fill="url(#strawGrad)"/>
+
+    <!-- Mint Leaves -->
+    <path d="M300 175 Q285 160 300 160 Q315 160 300 175 Z" fill="#588157"/>
+    <path d="M370 190 Q380 178 390 185 Q380 192 370 190 Z" fill="#588157"/>
+    <path d="M230 190 Q220 178 210 185 Q220 192 230 190 Z" fill="#588157"/>
+  </g>
+
+  <!-- Tag Pill -->
+  <g transform="translate(420, 30)">
+    <rect width="150" height="34" rx="17" fill="#FFFFFF" filter="url(#shadow5)"/>
+    <text x="75" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#E63946" text-anchor="middle">🍓 KYOTO CHIFFON</text>
+  </g>
+</svg>

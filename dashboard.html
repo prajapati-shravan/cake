@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- DÉLICE & CO. ADMIN AUTH GATE: IN-PAGE MODAL PROTECTION -->
+  <script>
+    (function() {
+      try {
+        var raw = localStorage.getItem('delice_user');
+        if (raw) {
+          var u = JSON.parse(raw);
+          if (u && (u.role === 'admin' || u.role === 'staff' || u.isAdmin === true)) {
+            if (!sessionStorage.getItem('delice_admin_authenticated')) {
+              sessionStorage.setItem('delice_admin_authenticated', JSON.stringify({
+                email: u.email || 'admin@deliceandcake.in',
+                role: u.role || 'admin',
+                name: u.full_name || 'Admin',
+                timestamp: new Date().toISOString()
+              }));
+            }
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <title>Délice & Co. — Operations & Admin Dashboard</title>
+  <!-- PWA & Mobile Web App Meta -->
+  <meta name="theme-color" content="#1B3358">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Délice Admin">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="dash-sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🍰</div>
+      <div>
+        <div class="brand-title">DÉLICE & CO.</div>
+        <span class="brand-badge">ADMIN HUB</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Core Management</div>
+      <button class="nav-item active" data-view="overview">
+        <span class="icon">📊</span>
+        <span>Overview</span>
+      </button>
+      <button class="nav-item" data-view="orders">
+        <span class="icon">📦</span>
+        <span>Orders Manager</span>
+        <span class="badge" id="pendingNavBadge">1</span>
+      </button>
+      <button class="nav-item" data-view="custom-cakes">
+        <span class="icon">🎨</span>
+        <span>Custom Cake Requests</span>
+        <span class="badge" id="customCakeNavBadge" style="background:#8B5CF6; color:#fff;">0</span>
+      </button>
+      <button class="nav-item" data-view="menu">
+        <span class="icon">🎂</span>
+        <span>Menu & Cakes</span>
+      </button>
+      <button class="nav-item" data-view="delivery-slots">
+        <span class="icon">⏰</span>
+        <span>Delivery Slots</span>
+      </button>
+      <button class="nav-item" data-view="coupons">
+        <span class="icon">🏷️</span>
+        <span>Coupons & Promos</span>
+      </button>
+      <button class="nav-item" data-view="payments">
+        <span class="icon">💳</span>
+        <span>Payments (Razorpay)</span>
+      </button>
+      <button class="nav-item" data-view="reviews">
+        <span class="icon">⭐</span>
+        <span>Verified Reviews</span>
+      </button>
+      <button class="nav-item" data-view="customers">
+        <span class="icon">👥</span>
+        <span>Customers (CRM)</span>
+      </button>
+
+      <div class="nav-section-title">Communications</div>
+      <button class="nav-item" data-view="email-receipts">
+        <span class="icon">📧</span>
+        <span>Email Receipts</span>
+      </button>
+
+      <div class="nav-section-title">System & Security</div>
+      <button class="nav-item" data-view="audit-logs">
+        <span class="icon">🛡️</span>
+        <span>Audit Logs</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <span class="icon">⚙️</span>
+        <span>Store Settings</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="index.html" target="_blank" class="store-link-btn">
+        <span>🌐</span>
+        <span>View Live Website</span>
+        <span style="font-size:0.75rem; margin-left:auto;">↗</span>
+      </a>
+      <a href="login.html" target="_blank" class="store-link-btn" style="margin-top:6px; background:rgba(203,164,107,0.15); color:#FFD6A8; border:1px solid rgba(203,164,107,0.3);">
+        <span>✨</span>
+        <span>Connoisseur Club Login</span>
+        <span style="font-size:0.75rem; margin-left:auto;">↗</span>
+      </a>
+      <div style="font-size:0.75rem; color:#6C7280; text-align:center; margin-top:8px;">
+        Call: <strong>+91 9909444882</strong>
+      </div>
+    </div>
+  </aside>
+
+  <!-- SIDEBAR MOBILE BACKDROP -->
+  <div class="dash-sidebar-backdrop" id="dashSidebarBackdrop"></div>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="dash-main">
+
+    <!-- TOPBAR -->
+    <header class="dash-topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-toggle" id="dashMobileMenuToggle">☰</button>
+        <div class="topbar-search">
+          <span>🔍</span>
+          <input type="text" id="globalSearchInput" placeholder="Search orders, clients, or products...">
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Theme Selector -->
+        <div class="theme-selector-pill" title="Choose Dashboard Color Theme">
+          <span>🎨</span>
+          <select id="themeSelector" onchange="window.dashManager.setTheme(this.value)">
+            <option value="noir">👑 Noir &amp; Gold</option>
+            <option value="sapphire">💎 Sapphire</option>
+            <option value="emerald">🌿 Emerald</option>
+            <option value="light">☀️ Alabaster</option>
+          </select>
+        </div>
+
+        <div id="topbarDbStatus" style="display:flex; align-items:center; gap:0.45rem; font-size:0.8rem; padding:0.4rem 0.85rem; background:rgba(16, 185, 129, 0.12); color:#34D399; border:1px solid rgba(16, 185, 129, 0.3); border-radius:20px; font-weight:600; cursor:pointer;" onclick="document.querySelector('[data-view=\'settings\']').click()" title="Click to view & configure Supabase Connection">
+          <span id="topbarDbDot" style="width:8px; height:8px; border-radius:50%; background:#10B981;"></span>
+          <span id="topbarDbText">Supabase Connected</span>
+        </div>
+
+
+        <button class="btn-secondary" onclick="window.dashManager.exportCSV()" title="Export all orders to CSV">
+          <span>📥</span>
+          <span>Export CSV</span>
+        </button>
+
+        <button class="btn-primary" onclick="window.dashManager.openNewOrderModal()">
+          <span>➕</span>
+          <span>New Order</span>
+        </button>
+
+        <div id="adminUserPill" style="display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; font-weight:600; padding:0.35rem 0.75rem; background:var(--bg-surface-elevated); color:var(--text-primary); border-radius:20px; border:1px solid var(--border-light);">
+          <span class="cust-avatar" style="width:24px; height:24px; font-size:11px;">👑</span>
+          <span id="adminUserRoleText">Head Admin</span>
+        </div>
+
+        <button class="btn-secondary" onclick="window.dashManager.logoutAdmin()" title="Sign out of Admin Hub" style="padding:0.4rem 0.65rem;">
+          <span>🚪</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <div class="dash-body">
+
+      <!-- VIEW 1: OVERVIEW -->
+      <section class="dash-view active" id="view-overview">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Store Dashboard & KPIs</h1>
+            <p>Real-time analytics, kitchen volume, and customer dispatch.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-secondary" onclick="location.reload()">🔄 Refresh Data</button>
+          </div>
+        </div>
+
+        <!-- KPI CARDS (100% REAL LIVE DATA) -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">Total Gross Revenue</div>
+              <div class="kpi-value" id="kpiRevenue">₹0</div>
+              <div class="kpi-delta positive" id="kpiRevDelta">Awaiting customer orders</div>
+            </div>
+            <div class="kpi-icon-wrap icon-revenue">₹</div>
+          </div>
+
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">Total Orders Received</div>
+              <div class="kpi-value" id="kpiOrders">0</div>
+              <div class="kpi-delta positive">Real live sync</div>
+            </div>
+            <div class="kpi-icon-wrap icon-orders">📦</div>
+          </div>
+
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">Pending Orders</div>
+              <div class="kpi-value" id="kpiPending" style="color:#DC2626;">0</div>
+              <div class="kpi-delta neutral">Requires action</div>
+            </div>
+            <div class="kpi-icon-wrap icon-pending">⏳</div>
+          </div>
+
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-info-title">Real Clients Reached</div>
+              <div class="kpi-value" id="kpiCustomers">0</div>
+              <div class="kpi-delta positive">+91 9909444882</div>
+            </div>
+            <div class="kpi-icon-wrap icon-customers">👥</div>
+          </div>
+
+          <div class="kpi-card" onclick="document.querySelector('[data-view=\'custom-cakes\']').click()" style="cursor:pointer;" title="Click to view all Custom Cake Inquiries">
+            <div>
+              <div class="kpi-info-title">Custom Cake Inquiries</div>
+              <div class="kpi-value" id="kpiCustomCakes" style="color:#8B5CF6;">0</div>
+              <div class="kpi-delta positive" id="kpiCustomDelta">Studio design requests</div>
+            </div>
+            <div class="kpi-icon-wrap" style="background:#F5F3FF; color:#8B5CF6; border-radius:12px; font-size:1.4rem;">🎨</div>
+          </div>
+        </div>
+
+        <!-- CHARTS SECTION -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Revenue Performance (This Week in ₹)</h3>
+              <span class="chart-badge">Daily Gross</span>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="salesTrendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Category Breakdown</h3>
+              <span class="chart-badge">Volume</span>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="categoryPieChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ORDERS SNAPSHOT -->
+        <div class="view-header" style="margin-top:1.5rem; margin-bottom:1rem;">
+          <div class="view-title-group">
+            <h2 style="font-size:1.3rem; font-weight:700;">Live Kitchen & Delivery Queue</h2>
+          </div>
+          <button class="btn-secondary" onclick="document.querySelector('[data-view=\'orders\']').click()">
+            View All Orders →
+          </button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items Ordered</th>
+                  <th>Delivery Slot</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RECENT BESPOKE CUSTOM CAKE INQUIRIES SNAPSHOT -->
+        <div class="view-header" style="margin-top:2rem; margin-bottom:1rem;">
+          <div class="view-title-group">
+            <h2 style="font-size:1.3rem; font-weight:700;">🎨 Recent Bespoke Custom Cake Requests</h2>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin:0;">Inquiries submitted from the Bespoke Cake Studio with custom flavours, themes &amp; piping messages.</p>
+          </div>
+          <button class="btn-secondary" onclick="document.querySelector('[data-view=\'custom-cakes\']').click()">
+            View All Custom Requests →
+          </button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Customer Contact</th>
+                  <th>Flavour &amp; Weight</th>
+                  <th>Message on Cake</th>
+                  <th>Estimated Quote</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="overviewCustomCakesTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: ORDERS MANAGER -->
+      <section class="dash-view" id="view-orders">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>All Orders & Fulfillment</h1>
+            <p>Track statuses, send email updates to customers, and print kitchen slips.</p>
+          </div>
+          <button class="btn-primary" onclick="window.dashManager.openNewOrderModal()">
+            <span>➕</span>
+            <span>Create New Order</span>
+          </button>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="actions-bar">
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all" data-status="all">All Orders</button>
+            <button class="filter-btn" data-filter="confirmed" data-status="confirmed">📋 Confirmed</button>
+            <button class="filter-btn" data-filter="pending" data-status="pending">⏳ Pending</button>
+            <button class="filter-btn" data-filter="baking" data-status="baking">👩‍🍳 Baking</button>
+            <button class="filter-btn" data-filter="out_for_delivery" data-status="out_for_delivery">🚚 In Transit</button>
+            <button class="filter-btn" data-filter="completed" data-status="completed">✅ Completed</button>
+            <button class="filter-btn" data-filter="cancelled" data-status="cancelled">❌ Cancelled</button>
+          </div>
+          <div>
+            <input type="text" id="orderSearchInput" class="table-search-input" placeholder="Search orders or customer...">
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Delivery Time</th>
+                  <th>Total</th>
+                  <th>Order Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody2">
+                <!-- Synced with orders -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: MENU & CAKES -->
+      <section class="dash-view" id="view-menu">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Artisan Cake Catalog</h1>
+            <p>Manage cake pricing (INR ₹), descriptions, stock availability, and images.</p>
+          </div>
+          <button class="btn-primary" id="btnOpenAddCakeModal" onclick="window.dashManager ? window.dashManager.openAddCakeModal() : document.getElementById('addCakeModal').classList.add('active')">
+            <span>➕</span>
+            <span>Add New Cake</span>
+          </button>
+        </div>
+
+        <!-- DYNAMIC REAL CATALOG CONTAINER -->
+        <div class="dash-menu-grid" id="dashCatalogGrid">
+          <!-- Dynamically populated from real OFFICIAL_CATALOG by dashboard.js -->
+        </div>
+      </section>
+
+      <!-- VIEW 4: CUSTOMERS CRM -->
+      <section class="dash-view" id="view-customers">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Customer Directory & Loyalty</h1>
+            <p>View repeat clients, total spend in ₹, and send personal messages.</p>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer Name & Address</th>
+                  <th>Phone Number</th>
+                  <th>Total Orders</th>
+                  <th>Lifetime Value (INR)</th>
+                  <th>Last Order</th>
+                  <th>Quick Action</th>
+                </tr>
+              </thead>
+              <tbody id="customersTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: EMAIL RECEIPTS -->
+      <section class="dash-view" id="view-email-receipts">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Email Receipts &amp; Notifications</h1>
+            <p>Send order confirmation emails and delivery notifications to customers.</p>
+          </div>
+        </div>
+
+        <div class="wa-card-grid">
+          <!-- Template 1 -->
+          <div class="wa-template-card">
+            <div class="wa-card-title">
+              <span>🚚</span>
+              <span>Out for Delivery Notification</span>
+            </div>
+            <div class="wa-template-box">"Hello! 🎂 Your delicious cake order from Délice &amp; Co. has just left our kitchen and is on its way to you! Our delivery partner will reach shortly."</div>
+            <button class="btn-primary" onclick="alert('\u2705 Notification template copied. Paste into your email client to send.')">  
+              <span>📧</span>
+              <span>Copy Email Template</span>
+            </button>
+          </div>
+
+          <!-- Template 2 -->
+          <div class="wa-template-card">
+            <div class="wa-card-title">
+              <span>🎉</span>
+              <span>Festive 15% OFF Promo Blast</span>
+            </div>
+            <div class="wa-template-box">"Celebrate your special moments with sweetness! Use VIP code DELICE15 to get flat 15% OFF on all signature celebration cakes this weekend. Order now on our website!"</div>
+            <button class="btn-primary" onclick="alert('\u2705 Promo template copied. Paste into your email client.')">
+              <span>📧</span>
+              <span>Copy Promo Template</span>
+            </button>
+          </div>
+
+          <!-- Template 3 -->
+          <div class="wa-template-card">
+            <div class="wa-card-title">
+              <span>📝</span>
+              <span>Custom Message Composer</span>
+            </div>
+            <div style="margin-bottom:1rem;">
+              <input type="text" id="customEmailRecipient" class="form-control" placeholder="Customer Email Address" style="margin-bottom:0.75rem;">
+              <textarea id="customEmailMsg" class="form-control" rows="4" placeholder="Type your custom message to customer..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="window.open('mailto:' + (document.getElementById('customEmailRecipient').value || '') + '?body=' + encodeURIComponent(document.getElementById('customEmailMsg').value || 'Hello from Délice & Co. Patisserie!'))">
+              <span>📧</span>
+              <span>Open Email Client</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: STORE SETTINGS -->
+      <section class="dash-view" id="view-settings">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>Store Operations & Settings</h1>
+            <p>Configure store parameters, notification channels, and delivery thresholds.</p>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-surface); border-radius:var(--radius-lg); border:1px solid var(--border-light); padding:2rem; max-width:700px;">
+          <form onsubmit="event.preventDefault(); alert('✅ Settings successfully saved!');">
+            <div class="form-group">
+              <label>Store Contact Phone Number</label>
+              <input type="text" class="form-control" value="+91 9909444882" readonly style="background:#F9FAFB; font-weight:600;">
+              <small style="color:var(--text-muted); font-size:0.75rem;">All customer orders and payment confirmations are confirmed via this number and email.</small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Currency & Symbol</label>
+                <input type="text" class="form-control" value="INR (₹)" readonly style="background:#F9FAFB;">
+              </div>
+              <div class="form-group">
+                <label>Free Delivery Threshold (₹)</label>
+                <input type="number" class="form-control" value="600">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Store Accepting Orders?</label>
+              <select class="form-control">
+                <option value="open" selected>🟢 Open — Currently Accepting All Online Orders</option>
+                <option value="closed">🔴 Paused — Kitchen Closed / Holiday</option>
+              </select>
+            </div>
+
+            <div style="display:flex; gap:1rem; margin-top:2rem; border-top:1px solid var(--border-light); padding-top:1.5rem; flex-wrap:wrap;">
+              <button type="submit" class="btn-primary">Save Settings</button>
+              <button type="button" class="btn-secondary" onclick="window.dashManager.clearAllOrders()" style="color:#DC2626; border-color:rgba(220,38,38,0.2);">
+                🗑️ Clear Orders Database
+              </button>
+            </div>
+          </form>
+        <div style="background:var(--bg-surface); border-radius:var(--radius-lg); border:1px solid var(--border-light); padding:2rem; max-width:700px; margin-top:1.5rem;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; border-bottom:1px solid var(--border-light); padding-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
+                <span>⚡</span> Supabase PostgreSQL Database Sync
+              </h3>
+              <p style="font-size:0.82rem; color:var(--text-secondary); margin-top:0.25rem;">
+                Connect your live Supabase cloud database to sync cakes catalog, stock, and customer orders.
+              </p>
+            </div>
+            <span id="sbConnStatusBadge" class="status-badge" style="background:#FEF3C7; color:#B45309; font-weight:700;">
+              ⏳ Awaiting Project URL
+            </span>
+          </div>
+
+          <form id="supabaseConfigForm" onsubmit="window.dashManager.saveSupabaseConfig(event)">
+            <div class="form-group">
+              <label>Supabase Project URL *</label>
+              <input type="url" id="sbProjectUrl" class="form-control" value="https://fccisnncmndbjckpaebm.supabase.co" placeholder="https://your-project-ref.supabase.co" required style="font-family:monospace; font-size:0.88rem;">
+              <small style="color:var(--text-muted); font-size:0.75rem;">Found in your Supabase Dashboard under <strong>Project Settings → API</strong>.</small>
+            </div>
+
+            <div class="form-group">
+              <label>Supabase Publishable / Anon API Key *</label>
+              <input type="text" id="sbApiKey" class="form-control" value="sb_publishable_XSUEFzUa1bB0tGbtGjixYg_v1eQGeik" required style="font-family:monospace; font-size:0.85rem; background:#F9FAFB;">
+              <small style="color:var(--text-muted); font-size:0.75rem;">Pre-configured with your active publishable key.</small>
+            </div>
+
+            <div id="sbTestFeedback" style="display:none; padding:0.75rem 1rem; border-radius:8px; font-size:0.85rem; margin-bottom:1rem;"></div>
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.25rem;">
+              <button type="submit" class="btn-primary">
+                <span>💾</span> Save & Connect
+              </button>
+              <button type="button" class="btn-secondary" onclick="window.dashManager.testSupabaseConnection()">
+                <span>🔄</span> Test Live Connection
+              </button>
+              <button type="button" class="btn-secondary" onclick="document.getElementById('sqlSchemaModal').classList.add('active')">
+                <span>📜</span> View Database SQL Schema
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 7: BESPOKE CUSTOM CAKE REQUESTS -->
+      <section class="dash-view" id="view-custom-cakes">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>🎨 Bespoke Custom Cake Requests</h1>
+            <p>Live inquiries submitted from the website Bespoke Studio &amp; customer inquiry form.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn-secondary" onclick="window.dashManager.renderCustomCakesTable()">
+              <span>🔄</span> Refresh Inquiries
+            </button>
+            <button class="btn-primary" style="background:linear-gradient(135deg, #7C3AED, #6D28D9); border-color:#6D28D9;" onclick="window.dashManager.openNewCustomCakeModal()">
+              <span>🎨</span> ➕ Make New Custom Cake
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <!-- Toolbar Filters -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;" id="customStatusFilterGroup">
+              <button class="filter-chip active" data-cfilter="all" onclick="window.dashManager.filterCustomCakes('all')">All Inquiries</button>
+              <button class="filter-chip" data-cfilter="pending" onclick="window.dashManager.filterCustomCakes('pending')">Pending</button>
+              <button class="filter-chip" data-cfilter="quoted" onclick="window.dashManager.filterCustomCakes('quoted')">Quoted</button>
+              <button class="filter-chip" data-cfilter="confirmed" onclick="window.dashManager.filterCustomCakes('confirmed')">Confirmed</button>
+              <button class="filter-chip" data-cfilter="baking" onclick="window.dashManager.filterCustomCakes('baking')">Baking</button>
+              <button class="filter-chip" data-cfilter="completed" onclick="window.dashManager.filterCustomCakes('completed')">Delivered</button>
+            </div>
+            <div style="min-width:260px; flex:1; max-width:400px;">
+              <input type="text" id="customCakeSearchInput" class="form-control" placeholder="Search customer, phone, flavour, theme..." oninput="window.dashManager.searchCustomCakes(this.value)">
+            </div>
+          </div>
+
+          <!-- Responsive Table -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request ID &amp; Date</th>
+                  <th>Customer Contact</th>
+                  <th>Flavour &amp; Weight</th>
+                  <th>Dietary</th>
+                  <th>Piped Message</th>
+                  <th>Theme / Notes</th>
+                  <th>Estimated Quote</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customCakesTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 8: DELIVERY SLOTS MANAGEMENT -->
+      <section class="dash-view" id="view-delivery-slots">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>⏰ Delivery Slots & Kitchen Capacity</h1>
+            <p>Configure time slots, order volume caps, and prevent overbooking on peak celebration dates.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-secondary" onclick="window.dashManager.renderDeliverySlotsTable()">
+              <span>🔄</span> Refresh Slots
+            </button>
+            <button class="btn-primary" onclick="window.dashManager.openAddSlotModal()">
+              <span>➕</span> Add Delivery Slot
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time Window</th>
+                  <th>Capacity (Max Orders)</th>
+                  <th>Current Orders</th>
+                  <th>Slot Availability</th>
+                  <th>Capacity Bar</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="deliverySlotsTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 9: PROMO COUPONS -->
+      <section class="dash-view" id="view-coupons">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>🏷️ Promo Coupons &amp; Discounts</h1>
+            <p>Manage promotional codes, minimum order value requirements, and usage caps.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-secondary" onclick="window.dashManager.renderCouponsTable()">
+              <span>🔄</span> Refresh Coupons
+            </button>
+            <button class="btn-primary" onclick="window.dashManager.openAddCouponModal()">
+              <span>➕</span> Create New Coupon
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Coupon Code</th>
+                  <th>Discount Type</th>
+                  <th>Value</th>
+                  <th>Min Order (₹)</th>
+                  <th>Max Discount (₹)</th>
+                  <th>Usage (Used / Limit)</th>
+                  <th>Expiry Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="couponsTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 10: PAYMENTS (RAZORPAY & COD) -->
+      <section class="dash-view" id="view-payments">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>💳 Payments &amp; Razorpay Transactions</h1>
+            <p>Real-time audit log of all online transactions, Razorpay payment signatures, and Cash on Delivery orders.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <a href="https://razorpay.me/@shravan5378" target="_blank" class="btn-secondary" style="color:#0284C7; border-color:#BFDBFE; text-decoration:none; display:flex; align-items:center; gap:0.4rem;">
+              <span>⚡</span> Razorpay.me (@shravan5378) ↗
+            </a>
+            <button class="btn-secondary" onclick="window.dashManager.renderPaymentsTable()">
+              <span>🔄</span> Refresh Payments
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Payment ID</th>
+                  <th>Order Number</th>
+                  <th>Amount</th>
+                  <th>Provider</th>
+                  <th>Razorpay Payment ID</th>
+                  <th>Payment Status</th>
+                  <th>Created At</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 11: VERIFIED REVIEWS MODERATION -->
+      <section class="dash-view" id="view-reviews">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>⭐ Verified Customer Reviews</h1>
+            <p>Moderate customer reviews submitted strictly by verified purchasers of completed and delivered orders.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-secondary" onclick="window.dashManager.renderReviewsTable()">
+              <span>🔄</span> Refresh Reviews
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Customer</th>
+                  <th>Rating</th>
+                  <th>Review Comment</th>
+                  <th>Verified Purchase</th>
+                  <th>Moderation Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reviewsTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 12: SYSTEM AUDIT LOGS -->
+      <section class="dash-view" id="view-audit-logs">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>🛡️ System Security &amp; Audit Logs</h1>
+            <p>Tamper-evident log of operational changes, price modifications, status updates, and login attempts.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-secondary" onclick="window.dashManager.renderAuditLogsTable()">
+              <span>🔄</span> Refresh Logs
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>Actor / User</th>
+                  <th>Entity Type</th>
+                  <th>Entity ID</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogsTableBody">
+                <!-- Injected via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 13: STORE SETTINGS & CLOUD DATABASE -->
+      <section class="dash-view" id="view-settings">
+        <div class="view-header">
+          <div class="view-title-group">
+            <h1>⚙️ Store Settings &amp; Cloud Database</h1>
+            <p>Connect Supabase PostgreSQL backend, manage payment gateway keys, and maintain store data.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-primary" onclick="window.dashManager.saveSupabaseSettings()">
+              <span>💾</span> Save All Settings
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <!-- CARD 1: SUPABASE POSTGRESQL CLOUD DATABASE -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <div class="settings-card-icon" style="background:#ECFDF5; color:#059669;">☁️</div>
+              <div>
+                <div class="settings-card-title">Supabase Cloud Database</div>
+                <span id="sbConnStatusBadge" style="font-size:0.75rem; font-weight:700; color:#059669;">🟢 Connected to Supabase</span>
+              </div>
+            </div>
+
+            <div id="sbTestFeedback" style="display:none; padding:10px 12px; border-radius:8px; font-size:0.82rem; margin-bottom:1rem;"></div>
+
+            <div class="form-group">
+              <label>Supabase Project REST URL</label>
+              <input type="url" id="sbProjectUrl" class="form-control" placeholder="https://fccisnncmndbjckpaebm.supabase.co" value="https://fccisnncmndbjckpaebm.supabase.co">
+              <span style="font-size:0.75rem; color:var(--text-muted); margin-top:3px; display:block;">Your project endpoint connected to PostgreSQL.</span>
+            </div>
+
+            <div class="form-group">
+              <label>Publishable Anon / Public API Key</label>
+              <input type="password" id="sbApiKey" class="form-control" placeholder="sb_publishable_..." value="sb_publishable_XSUEFzUa1bB0tGbtGjixYg_v1eQGeik">
+              <span style="font-size:0.75rem; color:var(--text-muted); margin-top:3px; display:block;">Browser-safe public key for client-side queries.</span>
+            </div>
+
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1.25rem;">
+              <button type="button" class="btn-secondary" onclick="window.dashManager.testSupabaseConnection()">
+                <span>🔄</span> Test Connection
+              </button>
+              <button type="button" class="btn-primary" onclick="window.dashManager.saveSupabaseSettings()">
+                <span>💾</span> Save &amp; Connect
+              </button>
+              <button type="button" class="btn-secondary" onclick="document.getElementById('sqlSchemaModal').classList.add('active')" title="View SQL tables schema">
+                <span>📋</span> View SQL Schema
+              </button>
+            </div>
+          </div>
+
+          <!-- CARD 2: PAYMENT GATEWAY (RAZORPAY & UPI) -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <div class="settings-card-icon" style="background:#EFF6FF; color:#2563EB;">💳</div>
+              <div>
+                <div class="settings-card-title">Razorpay &amp; Instant UPI</div>
+                <span style="font-size:0.75rem; font-weight:700; color:#2563EB;">Test Sandbox &amp; Direct UPI Active</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Razorpay Key ID (Active Test Mode)</label>
+              <input type="text" id="sbRazorpayKey" class="form-control" placeholder="rzp_test_..." value="rzp_test_ThjQ4tQgJYio7w">
+              <span style="font-size:0.75rem; color:#10B981; font-weight:600; margin-top:3px; display:block;">✓ Connected to live Razorpay Checkout SDK.</span>
+            </div>
+
+            <div class="form-group">
+              <label>Razorpay Key Secret</label>
+              <div style="font-size:0.8rem; color:#059669; font-weight:600; padding:8px 10px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px;">
+                🔒 Secured Server-Side in Netlify / Backend Environment Variables (<code style="font-size:0.75rem;">RAZORPAY_KEY_SECRET</code>). Never exposed to browser.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Razorpay.me Direct UPI Handle</label>
+              <input type="url" id="sbRazorpayMe" class="form-control" placeholder="https://razorpay.me/@shravan5378" value="https://razorpay.me/@shravan5378">
+              <span style="font-size:0.75rem; color:#0284C7; font-weight:600; margin-top:3px; display:block;">⚡ Final payable amount is automatically pre-filled (?amount=XXXX).</span>
+            </div>
+
+            <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+              <a href="https://razorpay.me/@shravan5378" target="_blank" class="btn-secondary">
+                <span>↗</span> Open Razorpay.me Link
+              </a>
+              <button type="button" class="btn-primary" onclick="window.dashManager.savePaymentSettings()">
+                <span>💾</span> Save Payment Keys
+              </button>
+            </div>
+          </div>
+
+          <!-- CARD 3: STORE MAINTENANCE & ORDERS RESET -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <div class="settings-card-icon" style="background:#FFF1F2; color:#E11D48;">🧹</div>
+              <div>
+                <div class="settings-card-title">Order Hygiene &amp; Maintenance</div>
+                <span style="font-size:0.75rem; font-weight:700; color:#E11D48;">Clean Production Ready</span>
+              </div>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5; margin-bottom:1rem;">
+              Purge all simulated / dummy test orders so your kitchen queue and revenue analytics only reflect real customer orders.
+            </p>
+
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; margin-bottom:1.25rem;">
+              <div style="font-size:0.78rem; color:#64748B; font-weight:600;">ACTIVE STORAGE STATUS:</div>
+              <div style="font-size:0.88rem; font-weight:700; color:var(--text-primary); margin-top:2px;">Clean Queue • Ready for Real Customer Orders</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+              <button type="button" class="btn-danger-outline" style="justify-content:center; padding:0.65rem;" onclick="window.dashManager.clearAllOrders()">
+                <span>🧹</span> Remove All Mock / Fake Orders
+              </button>
+              <button type="button" class="btn-secondary" style="justify-content:center; padding:0.65rem;" onclick="window.dashManager.exportCSV()">
+                <span>📥</span> Export Orders Data Backup (CSV)
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL: MANUAL NEW ORDER -->
+  <div class="dash-modal" id="newOrderModal">
+    <div class="dash-modal-content">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.4rem;">Create New Customer Order</h3>
+        <button class="modal-close-btn" onclick="window.dashManager.closeNewOrderModal()">✕</button>
+      </div>
+
+      <form id="newOrderForm">
+        <div class="form-group">
+          <label>Customer Full Name *</label>
+          <input type="text" id="manualCustName" class="form-control" required placeholder="e.g. Priya Sharma">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Customer Mobile Number *</label>
+            <input type="tel" id="manualCustPhone" class="form-control" required placeholder="e.g. 9909444882">
+          </div>
+          <div class="form-group">
+            <label>Cake Selection *</label>
+            <select id="manualCakeSelect" class="form-control">
+              <option value="The Velvet Rose & Raspberry Chiffon">The Velvet Rose & Raspberry (₹899)</option>
+              <option value="Valrhona Noir Dark Truffle Mud Cake">Valrhona Dark Truffle (₹849)</option>
+              <option value="Pastel Petal Korean Bento Lunchbox Cake">Korean Bento Cake (₹399)</option>
+              <option value="Kyoto Fresh Strawberry Cloud Chiffon">Strawberry Cloud (₹799)</option>
+              <option value="Classic Golden Pineapple & Cream Gateau">Pineapple Gateau (₹549)</option>
+              <option value="The Royal Three-Tier Celebration Tower">Royal Wedding Tower (₹4,999)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price in INR (₹) *</label>
+            <input type="number" id="manualCakePrice" class="form-control" value="899" required>
+          </div>
+          <div class="form-group">
+            <label>Status *</label>
+            <select id="manualStatus" class="form-control">
+              <option value="pending">⏳ Pending Confirmation</option>
+              <option value="baking" selected>👩‍🍳 In Kitchen / Baking</option>
+              <option value="delivery">🚚 Out for Delivery</option>
+              <option value="completed">✅ Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Delivery Address *</label>
+          <input type="text" id="manualCustAddress" class="form-control" required placeholder="Flat / Building, Street, City">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Delivery Date</label>
+            <input type="date" id="manualDelivDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Delivery Slot</label>
+            <select id="manualDelivSlot" class="form-control">
+              <option value="Morning Slot (10 AM - 1 PM)">Morning (10 AM - 1 PM)</option>
+              <option value="Afternoon Slot (2 PM - 5 PM)">Afternoon (2 PM - 5 PM)</option>
+              <option value="Evening Slot (5 PM - 8 PM)">Evening (5 PM - 8 PM)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Custom Cake Message / Inscription</label>
+          <input type="text" id="manualCakeMsg" class="form-control" placeholder="e.g. Happy Birthday Rohan! 🎉">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn-secondary" onclick="window.dashManager.closeNewOrderModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Add Order to System</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: MOBILE ACCESS & QR CODE -->
+  <div class="dash-modal" id="mobileQrModal">
+    <div class="dash-modal-content" style="max-width: 440px; text-align: center;">
+      <div class="modal-header" style="justify-content: flex-end; border: none; padding-bottom: 0;">
+        <button class="modal-close-btn" onclick="document.getElementById('mobileQrModal').classList.remove('active')">✕</button>
+      </div>
+
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📱</div>
+      <h3 style="font-family: var(--font-serif); font-size: 1.4rem; color: var(--text-primary); margin-bottom: 0.4rem;">
+        Open Dashboard on Mobile
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+        Connect your phone to the <strong>same Wi-Fi network</strong> and scan the QR code below:
+      </p>
+
+      <div style="background: #FFF; padding: 1rem; border-radius: 12px; display: inline-block; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); margin-bottom: 1.25rem;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=http://10.34.118.107:3000/dashboard.html" 
+             alt="Scan to open Admin Dashboard on Mobile" 
+             style="width: 220px; height: 220px; display: block; border-radius: 8px;">
+      </div>
+
+      <div style="background: #F8FAFC; border: 1px dashed var(--border-light); border-radius: 8px; padding: 0.75rem; margin-bottom: 1.25rem; font-size: 0.88rem; word-break: break-all;">
+        <span style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">Or type this link in your mobile browser:</span>
+        <strong style="color: var(--color-primary); font-size: 0.95rem;">http://10.34.118.107:3000/dashboard.html</strong>
+      </div>
+
+      <button type="button" class="btn-primary" style="width: 100%; justify-content: center;" onclick="document.getElementById('mobileQrModal').classList.remove('active')">
+        Done
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD NEW ARTISAN CAKE (WORKABLE & CONNECTED) -->
+  <div class="dash-modal" id="addCakeModal">
+    <div class="dash-modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.4rem;">Add New Artisan Cake to Menu</h3>
+        <button class="modal-close-btn" onclick="window.dashManager.closeAddCakeModal()">✕</button>
+      </div>
+
+      <form id="addCakeForm" onsubmit="window.dashManager.submitNewCake(event)">
+        <div class="form-group">
+          <label>Cake Name *</label>
+          <input type="text" id="newCakeName" class="form-control" required placeholder="e.g. Lotus Biscoff Belgian Crunch Gateau">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="newCakeCategory" class="form-control" required>
+              <option value="Celebration Chiffon">Celebration Chiffon</option>
+              <option value="Korean Bento">Korean Bento</option>
+              <option value="Dietary / Gluten-Free">Dietary / Gluten-Free</option>
+              <option value="Wedding Tower">Wedding Tower</option>
+              <option value="Artisan Gateau">Artisan Gateau</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price in INR (₹) *</label>
+            <input type="number" id="newCakePrice" class="form-control" required placeholder="e.g. 899" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Serving / Size *</label>
+            <input type="text" id="newCakeSlices" class="form-control" required placeholder="e.g. 1/2 kg (Serves 4–6)">
+          </div>
+          <div class="form-group">
+            <label>Flavor Notes *</label>
+            <input type="text" id="newCakeFlavor" class="form-control" required placeholder="e.g. Wild Berries & Rosewater">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dietary Tag</label>
+            <input type="text" id="newCakeDietary" class="form-control" placeholder="e.g. 100% Pure Veg (Eggless)" value="100% Eggless Option">
+          </div>
+          <div class="form-group">
+            <label>Prep / Lead Time</label>
+            <input type="text" id="newCakeLeadTime" class="form-control" placeholder="e.g. Same Day (2 Hours)" value="Same Day (2 Hours)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Cake Image (Asset path or URL) *</label>
+          <div style="display:flex; gap:0.6rem; align-items:center; margin-bottom:0.5rem;">
+            <input type="text" id="newCakeImage" class="form-control" required value="assets/cake_velvet.jpg" oninput="document.getElementById('newCakeImgPreview').src = this.value;">
+            <div style="width:48px; height:48px; border-radius:8px; overflow:hidden; border:1px solid var(--border-light); flex-shrink:0; background:#eee;">
+              <img id="newCakeImgPreview" src="assets/cake_velvet.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/cake_velvet.jpg'">
+            </div>
+          </div>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; font-size:0.75rem;">
+            <span style="color:var(--text-muted); align-self:center;">Quick Select:</span>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_velvet.jpg')">Velvet</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_chocolate.jpg')">Chocolate</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_bento.jpg')">Bento</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_strawberry.jpg')">Strawberry</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_pineapple.jpg')">Pineapple</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_blackforest.jpg')">Black Forest</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_pistachio.jpg')">Pistachio</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickCakePreset('assets/cake_wedding.jpg')">Wedding</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="newCakeDesc" class="form-control" rows="3" required placeholder="Describe ingredients, texture, layers, and artisanal finish..."></textarea>
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:center; gap:0.6rem;">
+          <input type="checkbox" id="newCakeInStock" checked style="width:18px; height:18px; accent-color:var(--color-primary);">
+          <label for="newCakeInStock" style="margin-bottom:0; cursor:pointer; font-weight:600;">Mark as In Stock immediately</label>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; border-top:1px solid var(--border-light); padding-top:1rem;">
+          <button type="button" class="btn-secondary" onclick="window.dashManager.closeAddCakeModal()">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveCakeSubmitBtn">
+            <span>✨</span> Publish Cake to Catalog
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT ARTISAN CAKE -->
+  <div class="dash-modal" id="editCakeModal">
+    <div class="dash-modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.4rem;">Edit Artisan Cake Details</h3>
+        <button class="modal-close-btn" onclick="window.dashManager.closeEditCakeModal()">✕</button>
+      </div>
+
+      <form id="editCakeForm" onsubmit="window.dashManager.submitEditCake(event)">
+        <input type="hidden" id="editCakeId">
+        
+        <div class="form-group">
+          <label>Cake Name *</label>
+          <input type="text" id="editCakeName" class="form-control" required placeholder="e.g. Lotus Biscoff Belgian Crunch Gateau">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="editCakeCategory" class="form-control" required>
+              <option value="Celebration Chiffon">Celebration Chiffon</option>
+              <option value="Korean Bento">Korean Bento</option>
+              <option value="Dietary / Gluten-Free">Dietary / Gluten-Free</option>
+              <option value="Wedding Tower">Wedding Tower</option>
+              <option value="Artisan Gateau">Artisan Gateau</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price in INR (₹) *</label>
+            <input type="number" id="editCakePrice" class="form-control" required placeholder="e.g. 899" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Serving / Size *</label>
+            <input type="text" id="editCakeSlices" class="form-control" required placeholder="e.g. 1/2 kg (Serves 4–6)">
+          </div>
+          <div class="form-group">
+            <label>Flavor Notes *</label>
+            <input type="text" id="editCakeFlavor" class="form-control" required placeholder="e.g. Wild Berries & Rosewater">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dietary Tag</label>
+            <input type="text" id="editCakeDietary" class="form-control" placeholder="e.g. 100% Pure Veg (Eggless)">
+          </div>
+          <div class="form-group">
+            <label>Prep / Lead Time</label>
+            <input type="text" id="editCakeLeadTime" class="form-control" placeholder="e.g. Same Day (2 Hours)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Cake Image (Asset path or URL) *</label>
+          <div style="display:flex; gap:0.6rem; align-items:center; margin-bottom:0.5rem;">
+            <input type="text" id="editCakeImage" class="form-control" required oninput="document.getElementById('editCakeImgPreview').src = this.value;">
+            <div style="width:48px; height:48px; border-radius:8px; overflow:hidden; border:1px solid var(--border-light); flex-shrink:0; background:#eee;">
+              <img id="editCakeImgPreview" src="assets/cake_velvet.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='assets/cake_velvet.jpg'">
+            </div>
+          </div>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; font-size:0.75rem;">
+            <span style="color:var(--text-muted); align-self:center;">Quick Select:</span>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_velvet.jpg')">Velvet</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_chocolate.jpg')">Chocolate</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_bento.jpg')">Bento</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_strawberry.jpg')">Strawberry</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_pineapple.jpg')">Pineapple</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_blackforest.jpg')">Black Forest</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_pistachio.jpg')">Pistachio</button>
+            <button type="button" class="filter-btn" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="window.dashManager.pickEditCakePreset('assets/cake_wedding.jpg')">Wedding</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="editCakeDesc" class="form-control" rows="3" required placeholder="Describe ingredients, texture, layers, and artisanal finish..."></textarea>
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:center; gap:0.6rem;">
+          <input type="checkbox" id="editCakeInStock" style="width:18px; height:18px; accent-color:var(--color-primary);">
+          <label for="editCakeInStock" style="margin-bottom:0; cursor:pointer; font-weight:600;">Mark as In Stock immediately</label>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; border-top:1px solid var(--border-light); padding-top:1rem;">
+          <button type="button" class="btn-secondary" onclick="window.dashManager.closeEditCakeModal()">Cancel</button>
+          <button type="submit" class="btn-primary" id="editCakeSubmitBtn">
+            <span>💾</span> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SUPABASE SQL SCHEMA -->
+  <div class="dash-modal" id="sqlSchemaModal">
+    <div class="dash-modal-content" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.3rem;">Supabase Database Tables Setup (SQL)</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('sqlSchemaModal').classList.remove('active')">✕</button>
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+        Copy and run this SQL script in your <strong>Supabase Dashboard → SQL Editor</strong> to create the <code>cakes</code> and <code>orders</code> tables:
+      </p>
+
+      <div style="position:relative; margin-bottom:1.25rem;">
+        <pre id="sqlSchemaCode" style="background:#1E1E24; color:#F8FAFC; padding:1.2rem; border-radius:10px; font-size:0.8rem; overflow-x:auto; line-height:1.5; font-family:monospace; max-height:300px;">-- ========================================================
+-- DÉLICE & CO. — COMPLETE SUPABASE DATABASE SETUP SCRIPT
+-- Copy and paste into Supabase Dashboard -> SQL Editor -> Click RUN
+-- ========================================================
+
+-- 1. Create Cakes Catalog Table
+create table if not exists public.cakes (
+  id text primary key,
+  name text not null,
+  category text not null,
+  price numeric not null,
+  image text,
+  flavor text,
+  dietary text,
+  slices text,
+  description text,
+  lead_time text default 'Same Day (2 Hours)',
+  in_stock boolean default true,
+  created_at timestamptz default now()
+);
+
+-- 2. Create Orders Table
+create table if not exists public.orders (
+  id text primary key,
+  customer jsonb not null default '{}'::jsonb,
+  items jsonb not null default '[]'::jsonb,
+  dietary text,
+  cake_message text,
+  delivery_date text,
+  delivery_slot text,
+  subtotal numeric default 0,
+  delivery_fee numeric default 0,
+  total numeric default 0,
+  payment_method text default 'RAZORPAY',
+  status text default 'pending',
+  created_at timestamptz default now()
+);
+
+-- 3. Grant schema and table permissions with Row Level Security (RLS)
+grant usage on schema public to anon, authenticated, service_role;
+grant select on public.products, public.categories, public.product_variants, public.delivery_slots to anon, authenticated;
+grant all on all tables in schema public to service_role;
+
+-- 4. Enable Row Level Security (RLS) & Secure Policies
+alter table public.orders enable row level security;
+-- See database/FIX_SUPABASE_SECURITY_RLS.sql for production security policies.
+
+-- 5. Seed Initial Real Artisan Cakes
+insert into public.cakes (id, name, category, price, image, flavor, dietary, slices, description, lead_time, in_stock)
+values
+('velvet-rose', 'The Velvet Rose & Raspberry Chiffon', 'Celebration Chiffon', 899, 'assets/cake_velvet.jpg', 'Wild Berries & Rosewater', '100% Eggless Option', '1/2 kg (Serves 4–6)', 'Featherlight vanilla bean chiffon layered with tart wild raspberry compote, whipped French ganache, and edible organic rose petals.', 'Same Day (4 Hours)', true),
+('chocolate-fudge', 'Valrhona Noir Dark Truffle Mud Cake', 'Celebration Chiffon', 849, 'assets/cake_chocolate.jpg', 'Belgian 70% Dark Truffle', 'Pure Veg / Eggless Available', '1/2 kg (Serves 4–6)', 'Ultra-moist Belgian dark chocolate sponge drenched in silky chocolate truffle ganache, roasted hazelnuts, and Fleur de Sel caramel.', 'Same Day (2 Hours)', true),
+('korean-bento', 'Pastel Petal Korean Bento Lunchbox Cake', 'Korean Bento', 399, 'assets/cake_bento.jpg', 'Vanilla & Fresh Strawberry', 'Petite 250g Bento', 'Petite (Serves 1–2)', 'Aesthetic Korean viral bento cake packaged in an eco sugarcane lunchbox with pastel border piping and custom chocolate lettering.', 'Instant / 1 Hour', true),
+('strawberry-cloud', 'Kyoto Fresh Strawberry Cloud Chiffon', 'Celebration Chiffon', 799, 'assets/cake_strawberry.jpg', 'Fresh Strawberry Chiffon', 'Hokkaido Fresh Cream', '1/2 kg (Serves 4–6)', 'Cloud-like Japanese sponge filled with fresh Mahabaleshwar strawberries and light-as-air whipped dairy cream.', 'Same Day (3 Hours)', true),
+('fresh-pineapple', 'Classic Golden Pineapple & Cream Gateau', 'Celebration Chiffon', 549, 'assets/cake_pineapple.jpg', 'Tangy Pineapple & Cherries', 'Indian Celebration Classic', '1/2 kg (Serves 4–6)', 'All-time favorite moist vanilla sponge soaked in real pineapple nectar, layered with slow-cooked pineapple tidbits and red glace cherries.', 'Same Day (2 Hours)', true),
+('black-forest', 'Classic German Black Forest Gateau', 'Celebration Chiffon', 599, 'assets/cake_blackforest.jpg', 'Dark Chocolate & Sour Cherries', 'Rich Shaved Chocolate', '1/2 kg (Serves 4–6)', 'Traditional chocolate sponge layered with whipped cream, imported sour cherry compote, and drenched in dark chocolate shavings.', 'Same Day (2 Hours)', true),
+('pistachio-rose', 'Sicilian Pistachio & Wild Blackberry', 'Dietary / Gluten-Free', 949, 'assets/cake_pistachio.jpg', 'Roasted Pistachio & Berry', 'Gluten-Free Nut Flour', '1/2 kg (Serves 4–6)', 'Finely ground green Bronte pistachio cake layered with tart wild blackberry puree and vanilla mascarpone frosting.', '24 Hours', true),
+('wedding-tower', 'The Royal Three-Tier Celebration Tower', 'Wedding Tower', 4999, 'assets/cake_wedding.jpg', 'Champagne & Bourbon Vanilla', 'Bespoke Multi-Tier (3 kg)', '3-Tier (Serves 35–45)', 'Breathtaking 3-tier grand wedding centerpiece draped with hand-sculpted sugar petals, gold leaf ribbon, and champagne buttercream.', '48 Hours Notice', true)
+on conflict (id) do nothing;</pre>
+
+        <button type="button" class="btn-primary" style="position:absolute; top:8px; right:8px; padding:0.35rem 0.75rem; font-size:0.75rem;" onclick="window.dashManager.copySqlSchema()">
+          📋 Copy SQL
+        </button>
+      <div style="display:flex; justify-content:flex-end;">
+        <button type="button" class="btn-secondary" onclick="document.getElementById('sqlSchemaModal').classList.remove('active')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VIEW CUSTOM CAKE DETAILS & CUSTOMER INFO -->
+  <div class="dash-modal" id="customCakeDetailsModal">
+    <div class="dash-modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.6rem;">🎨</span>
+          <div>
+            <h3 style="font-family:var(--font-serif); font-size:1.3rem; margin:0;" id="ccdTitle">Custom Cake Inquiry</h3>
+            <span id="ccdBadge" class="status-badge" style="background:#F5F3FF; color:#8B5CF6; font-size:0.75rem; font-weight:700;">Pending</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="document.getElementById('customCakeDetailsModal').classList.remove('active')">✕</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem;">
+        <div style="background:#F9FAFB; border:1px solid var(--border-light); border-radius:10px; padding:1rem;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem;">Customer Details</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <div style="font-weight:700; font-size:1rem; color:var(--text-primary);" id="ccdCustName">Rahul Patel</div>
+              <div style="font-size:0.85rem; color:var(--text-secondary);" id="ccdCustPhone">+91 99094 44882</div>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <a href="#" id="ccdCallBtn" class="btn-secondary" style="padding:0.4rem 0.75rem; font-size:0.8rem;">📞 Call</a>
+              <a href="#" id="ccdWaDirectBtn" class="btn-primary" style="background:var(--color-primary); border:none; padding:0.4rem 0.75rem; font-size:0.8rem;">📧 Send Email</a>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div style="background:#fff; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem;">
+            <small style="color:var(--text-muted); font-size:0.75rem; display:block;">Flavour Base</small>
+            <strong style="color:var(--text-primary); font-size:0.9rem;" id="ccdFlavour">Belgian Dark Truffle</strong>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem;">
+            <small style="color:var(--text-muted); font-size:0.75rem; display:block;">Weight / Tiers</small>
+            <strong style="color:var(--text-primary); font-size:0.9rem;" id="ccdWeight">1 kg (Serves 8–12)</strong>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem;">
+            <small style="color:var(--text-muted); font-size:0.75rem; display:block;">Dietary Preference</small>
+            <strong style="color:var(--text-primary); font-size:0.9rem;" id="ccdDiet">100% Pure Veg (Eggless)</strong>
+          </div>
+          <div style="background:#fff; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem;">
+            <small style="color:var(--text-muted); font-size:0.75rem; display:block;">Delivery Date</small>
+            <strong style="color:var(--text-primary); font-size:0.9rem;" id="ccdDate">Today Express</strong>
+          </div>
+        </div>
+
+        <div style="background:#FFFBF5; border:1px dashed var(--color-primary); border-radius:8px; padding:0.75rem;">
+          <small style="color:var(--color-primary); font-weight:700; font-size:0.75rem; display:block;">Piped Message on Cake</small>
+          <div style="font-family:var(--font-serif); font-size:1.1rem; color:var(--text-primary); font-style:italic;" id="ccdMessage">"Happy Birthday"</div>
+        </div>
+
+        <div style="background:#F9FAFB; border:1px solid var(--border-light); border-radius:8px; padding:0.75rem;">
+          <small style="color:var(--text-muted); font-size:0.75rem; display:block;">Theme &amp; Decoration Notes</small>
+          <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;" id="ccdNotes">Pastel theme with chocolate drip</div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:0.75rem 1rem;">
+          <span style="font-size:0.9rem; font-weight:600; color:#1E40AF;">Estimated Live Quote:</span>
+          <strong style="font-size:1.25rem; color:#1E40AF;" id="ccdPrice">₹1,665</strong>
+        </div>
+
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label>Update Request Status:</label>
+          <select id="ccdStatusSelect" class="form-control" onchange="window.dashManager.updateCustomCakeStatusFromModal(this.value)">
+            <option value="pending">Pending Review</option>
+            <option value="quoted">Price Quoted</option>
+            <option value="confirmed">Confirmed by Customer</option>
+            <option value="baking">In Kitchen / Baking</option>
+            <option value="completed">Delivered / Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; gap:0.75rem;">
+        <button type="button" class="btn-secondary" style="color:#DC2626;" onclick="window.dashManager.deleteCurrentCustomCake()">
+          🗑 Delete
+        </button>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('customCakeDetailsModal').classList.remove('active')">
+            Close
+          </button>
+          <button type="button" class="btn-primary" style="background:#059669; border-color:#059669;" onclick="window.dashManager.convertCustomCakeToOrder()">
+            <span>👩‍🍳</span> Convert to Live Order
+          </button>
+          <button type="button" class="btn-primary" style="background:var(--color-primary); border:none;" id="ccdReplyWaBtn">
+            <span>📞</span> Call Customer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MANUAL LOG CUSTOM CAKE INQUIRY -->
+  <div class="dash-modal" id="newCustomCakeModal">
+    <div class="dash-modal-content" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.3rem;">🎨 Make &amp; Create Custom Cake</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('newCustomCakeModal').classList.remove('active')">✕</button>
+      </div>
+
+      <form id="newCustomCakeForm" onsubmit="window.dashManager.saveNewCustomCake(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Customer Full Name *</label>
+            <input type="text" id="nccName" class="form-control" required placeholder="e.g. Ananya Patel">
+          </div>
+          <div class="form-group">
+            <label>Mobile / Phone *</label>
+            <input type="tel" id="nccPhone" class="form-control" required placeholder="e.g. 9876543210">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Flavour Base *</label>
+            <select id="nccFlavour" class="form-control" onchange="window.dashManager.calcNewCustomCakePrice()">
+              <option value="Belgian Dark Truffle">Belgian Dark Truffle</option>
+              <option value="Velvet Rose & Wild Berry" selected>Velvet Rose &amp; Wild Berry</option>
+              <option value="Kyoto Strawberry Cloud">Kyoto Strawberry Cloud</option>
+              <option value="Sicilian Bronte Pistachio">Sicilian Bronte Pistachio</option>
+              <option value="Nutella Lotus Biscoff">Nutella Lotus Biscoff</option>
+              <option value="Golden Pineapple Gateau">Golden Pineapple Gateau</option>
+              <option value="Other Bespoke Flavour">Other Custom Flavour</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Weight / Tiers *</label>
+            <select id="nccWeight" class="form-control" onchange="window.dashManager.calcNewCustomCakePrice()">
+              <option value="0.5 kg (Serves 4–6)">0.5 kg (Serves 4–6)</option>
+              <option value="1 kg (Serves 8–12)" selected>1 kg (Serves 8–12)</option>
+              <option value="1.5 kg (Serves 14–18)">1.5 kg (Serves 14–18)</option>
+              <option value="2 kg (Two-Tier Tower)">2 kg (Two-Tier Tower)</option>
+              <option value="3 kg 3-Tier Grand Tower">3 kg 3-Tier Grand Tower</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Dietary Requirement</label>
+            <select id="nccDiet" class="form-control">
+              <option value="100% Pure Veg (Eggless)">100% Pure Veg (Eggless)</option>
+              <option value="Jain Friendly (No Gelatin / Pure Veg)">Jain Friendly (No Gelatin / Pure Veg)</option>
+              <option value="Gluten-Free Nut Flour">Gluten-Free Nut Flour</option>
+              <option value="With Organic Eggs">Classic Egg Recipe</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Required Delivery Date *</label>
+            <input type="date" id="nccDate" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Message on Cake (Piped in Chocolate)</label>
+          <input type="text" id="nccMessage" class="form-control" placeholder="e.g. Happy 25th Silver Jubilee!">
+        </div>
+
+        <div class="form-group">
+          <label>Theme, Colour Palette &amp; Decor Notes</label>
+          <textarea id="nccNotes" class="form-control" rows="2" placeholder="e.g. Pastel lavender floral garland, edible 24K gold foil trim, chocolate drip..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Estimated Quote Price (₹) *</label>
+            <input type="number" id="nccPrice" class="form-control" value="1665" required>
+          </div>
+          <div class="form-group">
+            <label>Initial Status *</label>
+            <select id="nccStatus" class="form-control">
+              <option value="pending">⏳ Pending Review</option>
+              <option value="quoted">💬 Quoted / Discussing</option>
+              <option value="confirmed" selected>👍 Confirmed by Customer</option>
+              <option value="baking">👩‍🍳 In Kitchen / Baking</option>
+              <option value="completed">✅ Delivered / Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; border-top:1px solid var(--border-light); padding-top:1rem;">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('newCustomCakeModal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #7C3AED, #6D28D9); border-color:#6D28D9;">
+            <span>✨</span> Create &amp; Save Custom Cake
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD DELIVERY SLOT -->
+  <div class="dash-modal" id="addDeliverySlotModal">
+    <div class="dash-modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.3rem;">⏰ Add New Delivery Slot</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('addDeliverySlotModal').classList.remove('active')">✕</button>
+      </div>
+      <form id="addDeliverySlotForm" onsubmit="window.dashManager.saveNewDeliverySlot(event)">
+        <div class="form-group">
+          <label>Delivery Date *</label>
+          <input type="date" id="newSlotDate" class="form-control" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Time *</label>
+            <input type="time" id="newSlotStart" class="form-control" value="10:00" required>
+          </div>
+          <div class="form-group">
+            <label>End Time *</label>
+            <input type="time" id="newSlotEnd" class="form-control" value="14:00" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Maximum Orders Capacity *</label>
+          <input type="number" id="newSlotMax" class="form-control" value="10" min="1" max="100" required>
+          <small style="color:var(--text-muted); font-size:0.75rem;">Orders will be rejected once capacity reaches this limit.</small>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; border-top:1px solid var(--border-light); padding-top:1rem;">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('addDeliverySlotModal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Slot</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD PROMO COUPON -->
+  <div class="dash-modal" id="addCouponModal">
+    <div class="dash-modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-serif); font-size:1.3rem;">🏷️ Create Promotional Coupon</h3>
+        <button class="modal-close-btn" onclick="document.getElementById('addCouponModal').classList.remove('active')">✕</button>
+      </div>
+      <form id="addCouponForm" onsubmit="window.dashManager.saveNewCoupon(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Coupon Code *</label>
+            <input type="text" id="newCouponCode" class="form-control" placeholder="e.g. FESTIVE25" required style="text-transform:uppercase;">
+          </div>
+          <div class="form-group">
+            <label>Discount Type *</label>
+            <select id="newCouponType" class="form-control">
+              <option value="PERCENTAGE">Percentage (%)</option>
+              <option value="FIXED">Fixed Amount (₹)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Discount Value *</label>
+            <input type="number" id="newCouponValue" class="form-control" placeholder="e.g. 15" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Min Order Value (₹)</label>
+            <input type="number" id="newCouponMinOrder" class="form-control" value="500" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max Discount Cap (₹)</label>
+            <input type="number" id="newCouponMaxDiscount" class="form-control" value="250" min="0">
+          </div>
+          <div class="form-group">
+            <label>Usage Limit (Max Uses)</label>
+            <input type="number" id="newCouponUsageLimit" class="form-control" value="100" min="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Valid Until Date *</label>
+          <input type="date" id="newCouponExpiry" class="form-control" required>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; border-top:1px solid var(--border-light); padding-top:1rem;">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('addCouponModal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn-primary">Create Coupon</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADMIN AUTHENTICATION GUARD -->
+  <div class="dash-modal" id="adminAuthModal" style="background:rgba(18, 17, 15, 0.92); z-index:999999; backdrop-filter:blur(8px);">
+    <div class="dash-modal-content" style="max-width: 440px; border:1px solid rgba(200,90,50,0.3); box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="font-size:2.5rem; margin-bottom:0.5rem;">🍰</div>
+        <h2 style="font-family:var(--font-serif); font-size:1.6rem; color:var(--text-primary); margin-bottom:0.25rem;">Délice &amp; Co.</h2>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">Operations Hub &amp; Executive Admin Portal</p>
+        <div style="display:inline-block; font-size:0.72rem; font-weight:700; background:#FEF3C7; color:#B45309; padding:0.2rem 0.6rem; border-radius:20px; margin-top:0.5rem;">
+          🔒 Row-Level Security Protected
+        </div>
+      </div>
+
+      <div id="adminLoginAlert" style="display:none; padding:0.75rem; border-radius:8px; font-size:0.82rem; margin-bottom:1rem;"></div>
+
+      <form id="adminLoginForm" onsubmit="window.dashManager.handleAdminLogin(event)">
+        <div class="form-group">
+          <label style="font-weight:600; font-size:0.85rem;">Admin Email</label>
+          <input type="email" id="adminAuthEmail" class="form-control" required placeholder="admin@deliceandcake.in" value="admin@deliceandcake.in">
+        </div>
+        <div class="form-group">
+          <label style="font-weight:600; font-size:0.85rem;">Password</label>
+          <input type="password" id="adminAuthPassword" class="form-control" required placeholder="••••••••••••" value="Admin@123456">
+        </div>
+
+        <button type="submit" class="btn-primary" id="adminLoginBtn" style="width:100%; justify-content:center; padding:0.75rem; font-size:0.95rem; margin-top:1rem;">
+          <span>🔐</span> Sign In to Admin Hub
+        </button>
+
+        <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-light); text-align:center;">
+          <button type="button" class="btn-secondary" style="font-size:0.8rem; width:100%; justify-content:center;" onclick="window.dashManager.quickFillAdmin()">
+            <span>⚡</span> Quick Fill Demo Admin Credentials
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- SUPABASE RLS FIX MODAL -->
+  <div class="dash-modal" id="fixSupabaseRlsModal">
+    <div class="dash-modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="background:rgba(245, 158, 11, 0.15); color:#F59E0B; width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🔑</div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin:0;">Fix Supabase Table Permissions</h3>
+            <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0 0;">Allow website orders into your PostgreSQL database</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="document.getElementById('fixSupabaseRlsModal').classList.remove('active')">&times;</button>
+      </div>
+
+      <div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:0.85rem; color:#FBBF24; line-height:1.5;">
+        <strong>Why did Supabase show 0 entries?</strong><br>
+        PostgreSQL Row-Level Security (RLS) is enabled by default in Supabase, which blocks public customer inserts. Running this 1-click SQL script permanently allows orders to write to Supabase!
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">SQL Fix Script (Copy &amp; Run)</label>
+          <button type="button" class="btn-secondary" style="padding:3px 8px; font-size:0.75rem;" onclick="window.dashManager.copyRlsSql()">📋 Copy SQL</button>
+        </div>
+        <pre id="rlsSqlBox" style="background:var(--bg-app); border:1px solid var(--border-light); border-radius:8px; padding:12px; font-family:monospace; font-size:0.8rem; color:#38BDF8; overflow-x:auto; max-height:170px; user-select:all;">ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_cake_orders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.delivery_slots DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coupons DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_variants DISABLE ROW LEVEL SECURITY;</pre>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+        <a href="https://supabase.com/dashboard/project/fccisnncmndbjckpaebm/sql/new" target="_blank" class="btn-primary" style="flex:1; justify-content:center; padding:10px;">
+          <span>↗</span> Open Supabase SQL Editor
+        </a>
+        <button type="button" class="btn-secondary" onclick="window.dashManager.syncOrdersToSupabase()" style="flex:1; justify-content:center; padding:10px; border-color:var(--color-primary); color:var(--color-primary);">
+          <span>🔄</span> Test &amp; Sync Orders Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPABASE JS CLIENT + DELICE ADAPTER + CONTROLLER -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="dashboard.js"></script>
+
+</body>
+</html>

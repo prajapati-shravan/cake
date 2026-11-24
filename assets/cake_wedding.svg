@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="wedBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCFAF7"/>
+      <stop offset="100%" stop-color="#F3ECE2"/>
+    </linearGradient>
+    <linearGradient id="tierGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FBF2E9"/>
+    </linearGradient>
+    <linearGradient id="goldRibbon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#E9C46A"/>
+      <stop offset="50%" stop-color="#FFF3B0"/>
+      <stop offset="100%" stop-color="#D4A373"/>
+    </linearGradient>
+    <filter id="shadow3" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#5C3C2C" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="450" rx="16" fill="url(#wedBg)"/>
+  <circle cx="300" cy="220" r="190" fill="#FFFBF5" opacity="0.8"/>
+
+  <!-- Stand -->
+  <g filter="url(#shadow3)">
+    <ellipse cx="300" cy="405" rx="110" ry="14" fill="#D8C8B5"/>
+    <ellipse cx="300" cy="400" rx="100" ry="12" fill="#FFFFFF"/>
+    <path d="M280 375 L285 400 L315 400 L320 375 Z" fill="#E6DAD0"/>
+    <ellipse cx="300" cy="378" rx="190" ry="24" fill="#C9B59E"/>
+    <ellipse cx="300" cy="374" rx="190" ry="22" fill="#FFFFFF"/>
+  </g>
+
+  <!-- 3 TIERS -->
+  <!-- Bottom Tier (Tier 1) -->
+  <g filter="url(#shadow3)">
+    <path d="M190 290 C190 325 190 345 190 360 C190 378 410 378 410 360 L410 290 Z" fill="url(#tierGrad)"/>
+    <ellipse cx="300" cy="290" rx="110" ry="22" fill="#FFFFFF"/>
+    <!-- Gold Ribbon Base -->
+    <path d="M190 350 C190 365 410 365 410 350 L410 356 C410 371 190 371 190 356 Z" fill="url(#goldRibbon)"/>
+  </g>
+
+  <!-- Middle Tier (Tier 2) -->
+  <g filter="url(#shadow3)">
+    <path d="M225 210 C225 240 225 260 225 275 C225 290 375 290 375 275 L375 210 Z" fill="url(#tierGrad)"/>
+    <ellipse cx="300" cy="210" rx="75" ry="16" fill="#FFFFFF"/>
+    <path d="M225 268 C225 280 375 280 375 268 L375 273 C375 285 225 285 225 273 Z" fill="url(#goldRibbon)"/>
+  </g>
+
+  <!-- Top Tier (Tier 3) -->
+  <g filter="url(#shadow3)">
+    <path d="M255 140 C255 165 255 180 255 195 C255 208 345 208 345 195 L345 140 Z" fill="url(#tierGrad)"/>
+    <ellipse cx="300" cy="140" rx="45" ry="11" fill="#FFFFFF"/>
+    <path d="M255 190 C255 200 345 200 345 190 L345 194 C345 204 255 204 255 194 Z" fill="url(#goldRibbon)"/>
+  </g>
+
+  <!-- Floral Cascade Sculpted Sugar Roses -->
+  <g>
+    <!-- Cascade along left edge -->
+    <!-- Flower 1 (top) -->
+    <circle cx="295" cy="130" r="10" fill="#FADCD9"/>
+    <circle cx="295" cy="130" r="5" fill="#F4A261"/>
+    <!-- Leaves -->
+    <path d="M285 125 Q275 115 280 130 Z" fill="#8DA79A"/>
+
+    <!-- Flower 2 (middle tier) -->
+    <circle cx="240" cy="205" r="14" fill="#FADCD9"/>
+    <circle cx="240" cy="205" r="7" fill="#E76F51"/>
+    <circle cx="225" cy="218" r="10" fill="#FFF0ED"/>
+    <path d="M215 210 Q205 195 220 205 Z" fill="#8DA79A"/>
+
+    <!-- Flower 3 (bottom tier) -->
+    <circle cx="205" cy="285" r="16" fill="#FADCD9"/>
+    <circle cx="205" cy="285" r="8" fill="#F28482"/>
+    <circle cx="190" cy="300" r="12" fill="#FFF0ED"/>
+    <path d="M175 295 Q165 280 180 290 Z" fill="#8DA79A"/>
+
+    <!-- Gold Pearl Piping details on tiers -->
+    <g fill="#D4A373">
+      <circle cx="230" cy="290" r="2.5"/>
+      <circle cx="250" cy="293" r="2.5"/>
+      <circle cx="270" cy="295" r="2.5"/>
+      <circle cx="290" cy="296" r="2.5"/>
+      <circle cx="310" cy="296" r="2.5"/>
+      <circle cx="330" cy="295" r="2.5"/>
+      <circle cx="350" cy="293" r="2.5"/>
+      <circle cx="370" cy="290" r="2.5"/>
+    </g>
+  </g>
+
+  <!-- Tag Pill -->
+  <g transform="translate(420, 30)">
+    <rect width="150" height="34" rx="17" fill="#FFFFFF" filter="url(#shadow3)"/>
+    <text x="75" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#C2785C" text-anchor="middle">👑 3-TIER WEDDING</text>
+  </g>
+</svg>

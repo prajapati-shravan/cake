@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bfBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCFAF5"/>
+      <stop offset="100%" stop-color="#EFE8DE"/>
+    </linearGradient>
+    <filter id="shadow7" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#3A1C12" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="450" rx="16" fill="url(#bfBg)"/>
+  <circle cx="300" cy="240" r="190" fill="#FFF2EE" opacity="0.6"/>
+
+  <!-- Stand -->
+  <g filter="url(#shadow7)">
+    <ellipse cx="300" cy="385" rx="100" ry="14" fill="#D8C8B5"/>
+    <ellipse cx="300" cy="380" rx="90" ry="12" fill="#FFFFFF"/>
+    <path d="M280 340 L285 380 L315 380 L320 340 Z" fill="#E6DAD0"/>
+    <ellipse cx="300" cy="344" rx="180" ry="24" fill="#C9B59E"/>
+    <ellipse cx="300" cy="340" rx="180" ry="22" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Cake Body: Vanilla Cream & Chocolate Flakes Coating -->
+  <g filter="url(#shadow7)">
+    <path d="M180 230 C180 280 180 300 180 320 C180 340 420 340 420 320 L420 230 Z" fill="#FFFFFF"/>
+    <ellipse cx="300" cy="230" rx="120" ry="24" fill="#FFFBF5"/>
+    
+    <!-- Dark Chocolate Shavings Sprinkled all over base -->
+    <g fill="#2B1408" opacity="0.85">
+      <rect x="195" y="260" width="8" height="4" rx="1" transform="rotate(25 195 260)"/>
+      <rect x="235" y="275" width="10" height="4" rx="1" transform="rotate(-15 235 275)"/>
+      <rect x="270" y="290" width="7" height="3" rx="1" transform="rotate(40 270 290)"/>
+      <rect x="310" y="285" width="11" height="4" rx="1" transform="rotate(-30 310 285)"/>
+      <rect x="350" y="280" width="9" height="3" rx="1" transform="rotate(10 350 280)"/>
+      <rect x="390" y="265" width="8" height="4" rx="1" transform="rotate(-25 390 265)"/>
+      <rect x="210" y="300" width="12" height="4" rx="1" transform="rotate(35 210 300)"/>
+      <rect x="290" y="310" width="10" height="3" rx="1" transform="rotate(-15 290 310)"/>
+      <rect x="370" y="300" width="8" height="4" rx="1" transform="rotate(45 370 300)"/>
+    </g>
+  </g>
+
+  <!-- Whipped Cream Rosettes with Red Glace Cherries on Top -->
+  <g>
+    <!-- Dark Chocolate Flakes in center -->
+    <ellipse cx="300" cy="225" rx="55" ry="12" fill="#200D05"/>
+
+    <!-- Cream Rosettes -->
+    <!-- 1 -->
+    <circle cx="210" cy="225" r="14" fill="#FFFFFF" filter="url(#shadow7)"/>
+    <circle cx="210" cy="220" r="8" fill="#C9184A"/>
+    <circle cx="208" cy="217" r="2" fill="#FFFFFF"/>
+    <!-- 2 -->
+    <circle cx="245" cy="235" r="14" fill="#FFFFFF" filter="url(#shadow7)"/>
+    <circle cx="245" cy="230" r="8" fill="#C9184A"/>
+    <circle cx="243" cy="227" r="2" fill="#FFFFFF"/>
+    <!-- 3 -->
+    <circle cx="300" cy="240" r="14" fill="#FFFFFF" filter="url(#shadow7)"/>
+    <circle cx="300" cy="235" r="8" fill="#C9184A"/>
+    <circle cx="298" cy="232" r="2" fill="#FFFFFF"/>
+    <!-- 4 -->
+    <circle cx="355" cy="235" r="14" fill="#FFFFFF" filter="url(#shadow7)"/>
+    <circle cx="355" cy="230" r="8" fill="#C9184A"/>
+    <circle cx="353" cy="227" r="2" fill="#FFFFFF"/>
+    <!-- 5 -->
+    <circle cx="390" cy="225" r="14" fill="#FFFFFF" filter="url(#shadow7)"/>
+    <circle cx="390" cy="220" r="8" fill="#C9184A"/>
+    <circle cx="388" cy="217" r="2" fill="#FFFFFF"/>
+  </g>
+
+  <g transform="translate(420, 30)">
+    <rect width="150" height="34" rx="17" fill="#FFFFFF" filter="url(#shadow7)"/>
+    <text x="75" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#2B1408" text-anchor="middle">🍒 BLACK FOREST</text>
+  </g>
+</svg>

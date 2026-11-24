@@ -1,0 +1,12 @@
+{
+  "name": "cake-and-joy",
+  "version": "1.0.0",
+  "description": "Délice & Co. Artisan Patisserie E-Commerce",
+  "main": "index.html",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

@@ -1,0 +1,23 @@
+# Security: Block sensitive data and scripts from direct public access
+/orders_data.json         /404.html                                404
+/.env*                    /404.html                                404
+/*.sql                    /404.html                                404
+/*.py                     /404.html                                404
+
+# API Serverless Functions
+/api/send-email-receipt   /.netlify/functions/send-email-receipt   200
+/api/create-razorpay-order /.netlify/functions/orders              200
+/api/verify-payment       /.netlify/functions/orders               200
+/api/submit-order         /.netlify/functions/orders               200
+/api/orders               /.netlify/functions/orders               200
+
+# Pretty Clean Page URLs
+/custom                   /custom.html                             200
+/track                    /track.html                              200
+/menu                     /menu.html                               200
+/about                    /about.html                              200
+/login                    /login.html                              200
+/dashboard                /dashboard.html                          200
+
+# Fallback
+/*                        /index.html                              200

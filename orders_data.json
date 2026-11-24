@@ -1,0 +1,293 @@
+[
+  {
+    "order_number": "DL-2026-568722",
+    "customer": {
+      "name": "Shravan",
+      "email": "customer.shravan@delicecakes.in",
+      "phone": "9825012345",
+      "address": "cfwa"
+    },
+    "customer_name": "Shravan",
+    "customer_email": "customer.shravan@delicecakes.in",
+    "customer_phone": "9825012345",
+    "delivery_address": "cfwa",
+    "delivery_date": "2026-10-28",
+    "delivery_slot_text": "10:00 – 1:00",
+    "special_instructions": "",
+    "items": [
+      {
+        "name": "The Velvet Rose & Raspberry Chiffon",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 899.0,
+        "total": 899.0,
+        "message": "",
+        "img": "assets/cake_velvet.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 899.0,
+    "discount": 90.0,
+    "delivery_fee": 0.0,
+    "total": 809.0,
+    "payment_method": "RAZORPAY",
+    "payment_status": "PAID",
+    "status": "out_for_delivery",
+    "payment_id": "pay_TtKyAEQhOs1PIu",
+    "created_at": "2026-10-28T18:31:20.291921",
+    "razorpay_payment_id": "pay_TtKyAEQhOs1PIu",
+    "razorpay_order_id": "order_TtKy1rbzReArGD"
+  },
+  {
+    "order_number": "DL-2026-433833",
+    "customer": {
+      "name": "Jayesh Prajapati",
+      "email": "patron@deliceandcake.in",
+      "phone": "9876543210",
+      "address": "cfwa"
+    },
+    "customer_name": "Jayesh Prajapati",
+    "customer_email": "patron@deliceandcake.in",
+    "customer_phone": "9876543210",
+    "delivery_address": "cfwa",
+    "delivery_date": "2026-10-27",
+    "delivery_slot_text": "10:00 – 1:00",
+    "special_instructions": "",
+    "items": [
+      {
+        "name": "Valrhona Noir Dark Truffle Mud Cake",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 849.0,
+        "total": 849.0,
+        "message": "",
+        "img": "assets/cake_chocolate.jpg",
+        "isCustom": false
+      },
+      {
+        "name": "The Velvet Rose & Raspberry Chiffon",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 899.0,
+        "total": 899.0,
+        "message": "",
+        "img": "assets/cake_velvet.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 1748.0,
+    "discount": 175.0,
+    "delivery_fee": 0.0,
+    "total": 1573.0,
+    "payment_method": "RAZORPAY",
+    "payment_status": "PAID",
+    "status": "out_for_delivery",
+    "payment_id": "pay_TsoHNshybHk9oh",
+    "created_at": "2026-10-27T10:32:39.212675",
+    "razorpay_payment_id": "pay_TsoHNshybHk9oh",
+    "razorpay_order_id": "order_TsoHFVfhDZfIgN"
+  },
+  {
+    "order_number": "DL-2026-122435",
+    "customer": {
+      "name": "Aarav Sharma",
+      "email": "aarav.sharma@example.com",
+      "phone": "+91 98765 00001",
+      "address": "B-402, Alkapuri Heights, Vadodara, Gujarat"
+    },
+    "customer_name": "Aarav Sharma",
+    "customer_email": "aarav.sharma@example.com",
+    "customer_phone": "+91 98765 00001",
+    "delivery_address": "B-402, Alkapuri Heights, Vadodara, Gujarat",
+    "delivery_date": "2026-10-18",
+    "delivery_slot_text": "10:00 – 1:00",
+    "special_instructions": "Please ring doorbell once",
+    "items": [
+      {
+        "name": "Pastel Petal Korean Bento Lunchbox Cake",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 399,
+        "total": 399,
+        "message": "Happy Birthday!",
+        "img": "assets/cake_bento.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 399,
+    "discount": 40,
+    "delivery_fee": 0,
+    "total": 359,
+    "payment_method": "RAZORPAY",
+    "payment_status": "PAID",
+    "status": "CONFIRMED",
+    "payment_id": "pay_test_demo122435",
+    "created_at": "2026-10-18T09:38:44.373816",
+    "razorpay_payment_id": "pay_test_demo122435",
+    "razorpay_order_id": "order_test_demo122435"
+  },
+  {
+    "order_number": "DL-2026-880574",
+    "customer": {
+      "name": "Priya Patel",
+      "email": "priya.patel@example.com",
+      "phone": "+91 98765 00002",
+      "address": "12, Vasna Road, Vadodara, Gujarat"
+    },
+    "customer_name": "Priya Patel",
+    "customer_email": "priya.patel@example.com",
+    "customer_phone": "+91 98765 00002",
+    "delivery_address": "12, Vasna Road, Vadodara, Gujarat",
+    "delivery_date": "2026-09-30",
+    "delivery_slot_text": "10:00 – 1:00",
+    "special_instructions": "",
+    "items": [
+      {
+        "name": "The Velvet Rose & Raspberry Chiffon",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 899,
+        "total": 899,
+        "message": "Best Wishes",
+        "img": "assets/cake_velvet.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 899,
+    "discount": 0,
+    "delivery_fee": 0,
+    "total": 899,
+    "payment_method": "RAZORPAY",
+    "payment_status": "PAID",
+    "status": "CONFIRMED",
+    "payment_id": "pay_test_demo880574",
+    "created_at": "2026-09-30T19:29:01.444725",
+    "razorpay_payment_id": "pay_test_demo880574",
+    "razorpay_order_id": "order_test_demo880574"
+  },
+  {
+    "order_number": "DL-2026-534069",
+    "customer": {
+      "name": "Rohan Mehta",
+      "email": "rohan.mehta@example.com",
+      "phone": "+91 98765 00003",
+      "address": "77, Gotri Road, Vadodara, Gujarat"
+    },
+    "customer_name": "Rohan Mehta",
+    "customer_email": "rohan.mehta@example.com",
+    "customer_phone": "+91 98765 00003",
+    "delivery_address": "77, Gotri Road, Vadodara, Gujarat",
+    "delivery_date": "2026-09-30",
+    "delivery_slot_text": "7:00 – 10:00",
+    "special_instructions": "",
+    "items": [
+      {
+        "name": "The Velvet Rose & Raspberry Chiffon",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 899,
+        "total": 899,
+        "message": "",
+        "img": "assets/cake_velvet.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 899,
+    "discount": 0,
+    "delivery_fee": 0,
+    "total": 899,
+    "payment_method": "RAZORPAY",
+    "payment_status": "PAID",
+    "status": "CONFIRMED",
+    "payment_id": "pay_test_demo534069",
+    "created_at": "2026-09-30T19:24:09.522650",
+    "razorpay_payment_id": "pay_test_demo534069",
+    "razorpay_order_id": "order_test_demo534069"
+  },
+  {
+    "order_number": "DL-2026-477777",
+    "customer": {
+      "name": "Ananya Joshi",
+      "email": "ananya.joshi@example.com",
+      "phone": "+91 98765 00004",
+      "address": "401, Sun Pharma Road, Atladara, Vadodara"
+    },
+    "customer_name": "Ananya Joshi",
+    "customer_email": "ananya.joshi@example.com",
+    "customer_phone": "+91 98765 00004",
+    "delivery_address": "401, Sun Pharma Road, Atladara, Vadodara",
+    "delivery_date": "2026-09-30",
+    "delivery_slot_text": "10:00 – 1:00",
+    "special_instructions": "Handle with care",
+    "items": [
+      {
+        "name": "The Velvet Rose & Raspberry Chiffon",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 899,
+        "total": 899,
+        "message": "",
+        "img": "assets/cake_velvet.jpg",
+        "isCustom": false
+      },
+      {
+        "name": "Valrhona Noir Dark Truffle Mud Cake",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 849,
+        "total": 849,
+        "message": "Celebrations!",
+        "img": "assets/cake_chocolate.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 1748,
+    "discount": 0,
+    "delivery_fee": 0,
+    "total": 1748,
+    "payment_method": "RAZORPAY",
+    "payment_status": "PAID",
+    "status": "CONFIRMED",
+    "payment_id": "pay_test_demo477777",
+    "created_at": "2026-09-30T19:13:43.119046",
+    "razorpay_payment_id": "pay_test_demo477777",
+    "razorpay_order_id": "order_test_demo477777"
+  },
+  {
+    "order_number": "DL-2026-580908",
+    "customer": {
+      "name": "Karan Desai",
+      "email": "karan.desai@example.com",
+      "phone": "+91 98765 00005",
+      "address": "15, Race Course Circle, Vadodara, Gujarat"
+    },
+    "customer_name": "Karan Desai",
+    "customer_email": "karan.desai@example.com",
+    "customer_phone": "+91 98765 00005",
+    "delivery_address": "15, Race Course Circle, Vadodara, Gujarat",
+    "delivery_date": "2026-09-30",
+    "delivery_slot_text": "10:00 – 1:00",
+    "special_instructions": "",
+    "items": [
+      {
+        "name": "Pastel Petal Korean Bento Lunchbox Cake",
+        "weight": "500 Gm",
+        "qty": 1,
+        "price": 399,
+        "total": 399,
+        "message": "",
+        "img": "assets/cake_bento.jpg",
+        "isCustom": false
+      }
+    ],
+    "subtotal": 399,
+    "discount": 0,
+    "delivery_fee": 0,
+    "total": 399,
+    "payment_method": "COD",
+    "payment_status": "PENDING",
+    "status": "CONFIRMED",
+    "payment_id": "",
+    "created_at": "2026-09-30T19:06:07.025502"
+  }
+]

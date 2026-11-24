@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- DÉLICE & CO. DEVICE AUTH GATE: NEW DEVICES START AT LOGIN UNLESS DIRECT ORDER TRACKING -->
+    <script>
+      (function() {
+        try {
+          var search = window.location.search || '';
+          if (search.includes('order=')) return; // Allow direct order receipt tracking
+          var isAuth = false;
+          var rawUser = localStorage.getItem('delice_user');
+          if (rawUser) {
+            var u = JSON.parse(rawUser);
+            if (u && (u.id || u.phone || u.email || u.full_name)) {
+              isAuth = true;
+            }
+          }
+          if (!isAuth && (sessionStorage.getItem('delice_authenticated') === 'true' || localStorage.getItem('delice_authenticated') === 'true')) {
+            isAuth = true;
+          }
+          if (!isAuth && !search.includes('guest=1') && sessionStorage.getItem('delice_guest_browse') !== 'true') {
+            window.location.replace('login.html?redirect=track.html');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <title>Track Your Cake Order | DÉLICE &amp; CO. Artisan Patisserie</title>
+    <meta name="description" content="Track your freshly baked celebration cake order from Délice & Co. Vadodara. Live baking and delivery milestones.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- PWA & Mobile Web App Meta -->
+    <meta name="theme-color" content="#1B3358">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Délice &amp; Co.">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700&family=Poppins:wght@300;400;500;600;700;800&display=swap">
+    <style>
+        .track-hero {
+            padding: 56px 20px 48px;
+            background: radial-gradient(120% 80% at 50% 0%, #FFFFFF 0%, #F5F1EA 50%, #ECE7DD 100%);
+            border-bottom: 1px solid rgba(27, 51, 88, 0.08);
+            text-align: center;
+        }
+        .track-hero h1 {
+            font-family: var(--font-primary, 'Playfair Display', Georgia, serif);
+            font-size: clamp(2.2rem, 4.5vw, 3rem);
+            color: var(--navy);
+            margin: 0 0 10px;
+            font-weight: 700;
+        }
+        .track-hero p {
+            color: var(--text-muted);
+            max-width: 580px;
+            margin: 0 auto 28px;
+            font-size: 15.5px;
+            line-height: 1.6;
+        }
+        .track-search-card {
+            max-width: 540px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            padding: 32px 28px;
+            border-radius: 16px;
+            box-shadow: 0 12px 36px rgba(27, 51, 88, 0.08);
+            border: 1px solid rgba(203, 164, 107, 0.35);
+        }
+        .track-input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .track-input-group label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .track-input-group input {
+            width: 100%;
+            padding: 13px 15px;
+            border: 1.5px solid #D8DCE3;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FAFBFD;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .track-input-group input:focus {
+            border-color: var(--navy);
+            background: #fff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(27, 51, 88, 0.12);
+        }
+        .btn-track-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--navy) 0%, #11223b 100%);
+            color: #fff;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(27, 51, 88, 0.15);
+        }
+        .btn-track-submit:hover {
+            background: linear-gradient(135deg, #11223b 0%, #0d1b30 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(27, 51, 88, 0.25);
+        }
+
+        /* Result Container */
+        .track-result-wrapper {
+            max-width: 840px;
+            margin: 40px auto 60px;
+            padding: 0 20px;
+        }
+        .track-result-card {
+            background: #fff;
+            border: 1px solid rgba(203, 164, 107, 0.35);
+            border-radius: 16px;
+            box-shadow: 0 16px 45px rgba(27, 51, 88, 0.08);
+            overflow: hidden;
+        }
+        .track-header-bar {
+            background: linear-gradient(135deg, var(--navy) 0%, #12243F 100%);
+            color: #fff;
+            padding: 22px 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .track-order-badge {
+            background: #CBA46B;
+            color: #1A0F0A;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: inline-block;
+            letter-spacing: 0.5px;
+        }
+
+        /* Stepper */
+        .stepper-container {
+            padding: 32px 24px 28px;
+            background: #FAFBFD;
+            border-bottom: 1px solid #EAE6DF;
+        }
+        .stepper-progress {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .stepper-line {
+            position: absolute;
+            top: 18px;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: #E2E8F0;
+            z-index: 1;
+        }
+        .stepper-line-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #15803D 0%, #22C55E 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .step-node {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2.5px solid #CBD5E1;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #64748B;
+            transition: all 0.3s;
+        }
+        .step-node.completed .step-circle {
+            background: #15803D;
+            border-color: #15803D;
+            color: #fff;
+        }
+        .step-node.active .step-circle {
+            background: var(--navy);
+            border-color: #CBA46B;
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(203, 164, 107, 0.3);
+        }
+        .step-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+        }
+        .step-node.active .step-label {
+            color: var(--navy);
+            font-weight: 800;
+        }
+        .step-node.completed .step-label {
+            color: #15803D;
+        }
+
+        /* Order Details */
+        .order-content-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+            padding: 24px;
+        }
+        @media (max-width: 768px) {
+            .order-content-grid { grid-template-columns: 1fr; }
+            .stepper-container { overflow-x: auto; }
+            .stepper-progress { min-width: 480px; }
+        }
+        .order-section-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1.5px solid #F1F5F9;
+            padding-bottom: 6px;
+        }
+        .track-item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #E2E8F0;
+            font-size: 14px;
+        }
+        .track-item-row:last-child { border-bottom: none; }
+        .track-meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13.5px;
+        }
+    </style>
+</head>
+<body id="site">
+
+    <!-- =================== 1. ANNOUNCEMENT BAR =================== -->
+    <div class="announce">
+        <div class="announce-inner">
+            <svg width="18" height="14" viewBox="0 0 19 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15.8117 3.53942C15.254 2.62746 14.2721 2.0746 13.2169 2.07844H10.9474V1.14802C10.9467 0.514402 10.4425 0.000767706 9.82061 0H2.41516C1.0823 0.00153797 0.0015457 1.10189 0 2.4606V10.3583C0.00150957 11.3541 0.793988 12.1615 1.77137 12.163H2.45894C2.68536 13.2349 3.6152 14 4.69151 14C5.76701 14 6.69686 13.2349 6.92408 12.163H12.0767H12.0759C12.3031 13.2349 13.2329 14 14.3085 14C15.3847 14 16.3146 13.2349 16.5411 12.163H17.2286C18.206 12.1615 18.9985 11.3541 19 10.3583V9.23875C19 8.89887 18.9057 8.56669 18.7283 8.27912L15.8117 3.53942ZM14.9929 4.06461L16.3234 6.22462H14.309C13.8645 6.22462 13.5045 5.85706 13.5037 5.40492V3.10043C14.115 3.17963 14.6607 3.53257 14.9905 4.06236L14.9929 4.06461ZM0.966198 10.3584V2.46069C0.966953 1.64563 1.61528 0.985104 2.41529 0.984336H3.11343C6.0108 0.984273 7.8343 0.984273 7.8343 0.984273H9.82226C9.86453 0.984273 9.90604 1.00119 9.93623 1.03195C9.96642 1.06271 9.98302 1.10423 9.98302 1.14806V11.1788H6.92408C6.6969 10.1069 5.76706 9.34184 4.69151 9.34184C3.61526 9.34184 2.68538 10.1069 2.45894 11.1788H1.77137C1.32683 11.1781 0.966952 10.8113 0.966198 10.3584ZM4.69153 13.0151C4.15718 13.0158 3.67566 12.6883 3.47112 12.1854C3.26659 11.6825 3.3798 11.1035 3.75717 10.719C4.13529 10.3346 4.70285 10.2192 5.19645 10.4276C5.69005 10.636 6.01158 11.1266 6.0108 11.671C6.01005 12.413 5.41984 13.0135 4.69153 13.0151ZM14.3091 13.0151C13.7747 13.0151 13.2932 12.6875 13.0894 12.1846C12.8849 11.6817 12.9981 11.1035 13.3755 10.719C13.7536 10.3346 14.3211 10.2192 14.8147 10.4276C15.3083 10.636 15.6299 11.1266 15.6291 11.671C15.6283 12.413 15.0374 13.0143 14.3091 13.0151ZM17.2283 11.1789H16.5408C16.3143 10.107 15.3845 9.34188 14.3082 9.34188C13.2327 9.34188 12.3028 10.107 12.0756 11.1789H10.9473V3.06283H12.5375V5.40197C12.539 6.39774 13.3315 7.20513 14.3089 7.20667H16.9279L17.6426 8.36775H17.3279L17.3271 8.36699C17.0607 8.36699 16.8441 8.58767 16.8441 8.85911C16.8441 9.13131 17.0607 9.35122 17.3271 9.35122H18.0358V10.3578C18.0358 10.5761 17.9506 10.7853 17.7989 10.9391C17.6479 11.0929 17.4419 11.1789 17.2283 11.1789Z" fill="#E1E1DC"/>
+            </svg>
+            <span>2-Hour Express Delivery in Vadodara! 🎂 100% Pure Veg &amp; Eggless. Call Now: <strong>+91 99094 44882</strong></span>
+        </div>
+    </div>
+
+    <!-- =================== 2. HEADER SECTION =================== -->
+    <header id="siteHeader">
+        <div class="header-top">
+            <a href="index.html" class="logo" aria-label="Délice &amp; Co. Home">
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="logo-emblem" role="img">
+                    <circle cx="100" cy="100" r="95" stroke="#CBA46B" stroke-width="3" />
+                    <circle cx="100" cy="100" r="88" fill="#1B3358" stroke="#CBA46B" stroke-width="1.5" />
+                    <circle cx="100" cy="100" r="64" stroke="#CBA46B" stroke-width="1" stroke-dasharray="3 3" opacity="0.7" />
+                    <text x="100" y="114" font-family="'Playfair Display', Georgia, serif" font-size="36" font-weight="700" font-style="italic" fill="#FFD6A8" text-anchor="middle">
+                        D&amp;Co
+                    </text>
+                </svg>
+                <div class="logo-text-wrap">
+                    <span class="logo-name">DÉLICE &amp; CO.</span>
+                    <span class="logo-sub">ARTISAN PATISSERIE</span>
+                </div>
+            </a>
+
+            <!-- Search Bar (Desktop) -->
+            <form class="search-bar" id="searchForm" onsubmit="event.preventDefault(); window.searchCakes ? window.searchCakes() : (window.location.href='index.html#cakes');">
+                <label class="pin" for="hdrPincode" title="Delivery Pincode / Area">
+                    <svg width="15" height="17" viewBox="0 0 15 17" fill="none">
+                        <path d="M7.4502 0.125C11.4901 0.1251 14.7754 3.41028 14.7754 7.4502C14.7753 10.1956 13.1329 12.4081 11.7705 13.7705L7.4502 16.375L3.12891 13.7705C1.76662 12.4071 0.125073 10.1955 0.125 7.4502C0.125 3.41022 3.41022 0.125 7.4502 0.125Z" fill="#3C4B64"/>
+                    </svg>
+                    <input type="text" id="hdrPincode" class="pin-input" value="Akota, 390020" placeholder="Pincode or area" aria-label="Delivery pincode">
+                </label>
+                <input type="text" id="searchInput" name="q" placeholder="Search cakes, flavours, bento..." autocomplete="off">
+                <button type="submit" aria-label="Search">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M13 13L17 17M8 15C4.13401 15 1 11.866 1 8C1 4.13401 4.13401 1 8 1C11.866 1 15 4.13401 15 8C15 11.866 11.866 15 8 15Z" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="search-suggest" id="searchSuggest" role="listbox" hidden></div>
+            </form>
+
+            <!-- Header Actions -->
+            <div class="header-actions">
+                <a href="track.html" class="track-link" title="Track Live Order Status" style="color:var(--rust); font-weight:700;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Track</span>
+                </a>
+                <a href="custom.html" class="track-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    <span>Custom Studio</span>
+                </a>
+                <a href="login.html" class="track-link signin-link" id="headerAuthLink" title="Connoisseur Club Sign In & Orders">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span id="headerAuthText">Sign In</span>
+                </a>
+                <a href="#orderModal" class="cart-link" onclick="window.openInstantCheckout ? window.openInstantCheckout() : (window.location.href='index.html#orderModal'); return false;" title="Order Online & Checkout">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span>Order</span>
+                    <span class="cart-badge" id="cartBadgeCount">⚡</span>
+                </a>
+            </div>
+
+            <!-- Header CTA & Call -->
+            <div class="header-cta">
+                <button type="button" class="btn-express btn-cut" onclick="window.openInstantCheckout ? window.openInstantCheckout() : (window.location.href='index.html#checkout')">⚡ Order Online</button>
+                <a href="tel:+919909444882" class="btn-call btn-cut" title="Call Us">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <span>99094 44882</span>
+                </a>
+            </div>
+
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle Menu">☰</button>
+        </div>
+
+        <!-- Mobile search row -->
+        <form class="search-bar search-bar--mobile" onsubmit="event.preventDefault(); window.searchCakes ? window.searchCakes() : (window.location.href='index.html#cakes');">
+            <input type="text" id="searchInputMobile" placeholder="🔍 Search cakes, flavours, bento..." autocomplete="off">
+            <button type="submit" aria-label="Search">Go</button>
+        </form>
+
+        <!-- Header Bottom: Just Bake Mega Menu (Desktop) -->
+        <div class="header-bottom">
+            <nav class="main-nav" id="mainNav">
+                <div class="nav-item has-mega">
+                    <a href="index.html#cakes" class="nav-link">
+                        Cakes
+                        <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </a>
+                    <div class="mega-menu">
+                        <div class="mega-sidebar">
+                            <a href="index.html#cakes" class="mega-side-link active" onclick="window.filterCategory ? window.filterCategory('all') : (window.location.href='index.html#cakes'); return false;">All Cakes ❯</a>
+                            <a href="index.html#cakes" class="mega-side-link" onclick="window.filterCategory ? window.filterCategory('bday') : (window.location.href='index.html#cakes'); return false;">Birthday Cakes ❯</a>
+                            <a href="index.html#cakes" class="mega-side-link" onclick="window.filterCategory ? window.filterCategory('anniv') : (window.location.href='index.html#cakes'); return false;">Anniversary Cakes ❯</a>
+                            <a href="index.html#cakes" class="mega-side-link" onclick="window.filterCategory ? window.filterCategory('bento') : (window.location.href='index.html#cakes'); return false;">Korean Bento Cakes ❯</a>
+                        </div>
+                        <div class="mega-content">
+                            <div class="mega-links-col">
+                                <strong style="color:var(--rust);font-size:13px;">Specialty Highlights</strong>
+                                <a href="index.html#cakes" onclick="window.filterCategory ? window.filterCategory('all') : (window.location.href='index.html#cakes')">Express Same-Day Cakes (2 Hours)</a>
+                                <a href="index.html#cakes" onclick="window.filterCategory ? window.filterCategory('chiffon') : (window.location.href='index.html#cakes')">European Chiffon Cakes</a>
+                                <a href="index.html#cakes" onclick="window.filterCategory ? window.filterCategory('truffle') : (window.location.href='index.html#cakes')">Belgian Dark Truffle Cakes</a>
+                                <a href="index.html#cakes" onclick="window.filterCategory ? window.filterCategory('fruit') : (window.location.href='index.html#cakes')">Fresh Fruit &amp; Berry Cloud</a>
+                            </div>
+                            <div class="mega-links-col">
+                                <strong style="color:var(--rust);font-size:13px;">Quick Order</strong>
+                                <a href="javascript:void(0)" onclick="window.openOrderModalForCard ? window.openOrderModalForCard('velvet-rose') : window.openInstantCheckout()">Order Velvet Rose Chiffon</a>
+                                <a href="javascript:void(0)" onclick="window.openOrderModalForCard ? window.openOrderModalForCard('valrhona-truffle') : window.openInstantCheckout()">Order Belgian Dark Truffle</a>
+                                <a href="javascript:void(0)" onclick="window.openOrderModalForCard ? window.openOrderModalForCard('korean-bento') : window.openInstantCheckout()">Order Korean Bento Box</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-item"><a href="custom.html" class="nav-link">Custom Studio</a></div>
+                <div class="nav-item"><a href="track.html" class="nav-link active" style="color:var(--rust); font-weight:700;">Track Order</a></div>
+                <div class="nav-item"><a href="login.html" class="nav-link" style="color:var(--rust); font-weight:700;">Connoisseur Club</a></div>
+                <div class="nav-item"><a href="index.html#about" class="nav-link">Stores</a></div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- TRACK HERO SECTION -->
+    <section class="track-hero">
+        <span class="veg-tag-icon" style="margin-bottom:12px; display:inline-flex;"><span class="veg-tag-dot"></span> 100% Pure Veg Patisserie</span>
+        <h1>Real-time Order Tracker</h1>
+        <p>Follow your bespoke celebration cake through our kitchen stages — from fresh mixing and oven baking to doorstep delivery in Vadodara.</p>
+
+        <div class="track-search-card">
+            <form id="trackOrderForm" onsubmit="event.preventDefault(); window.searchOrderTracker();">
+                <div class="track-input-group">
+                    <label for="trackOrderNumber">Order Number <span style="color:#DC2626;">*</span></label>
+                    <input type="text" id="trackOrderNumber" placeholder="e.g. DL-2026-000102" required autocomplete="off">
+                </div>
+                <div class="track-input-group">
+                    <label for="trackPhone">Customer Mobile Number (Optional)</label>
+                    <input type="tel" id="trackPhone" placeholder="e.g. 9876543210" autocomplete="tel">
+                </div>
+                <button type="submit" class="btn-track-submit btn-cut" id="btnTrackSubmit">
+                    <span>🔍 Track Cake Status</span>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- TRACK RESULTS CONTAINER -->
+    <main class="track-result-wrapper" id="trackResultContainer" style="display:none;">
+        <div class="track-result-card" id="trackCard">
+            <!-- Dynamic Content Injected Here by JS -->
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="wrap">
+            <div class="f-top">
+                <div class="f-brand">
+                    <span class="logo orig" style="width:68px; height:68px; display:inline-block;">
+                        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="delice-emblem" role="img" aria-label="Délice &amp; Co. Logo">
+                            <defs>
+                                <radialGradient id="deliceBg" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#4A2616" />
+                                    <stop offset="70%" stop-color="#3B2418" />
+                                    <stop offset="100%" stop-color="#1A0F0A" />
+                                </radialGradient>
+                                <linearGradient id="deliceGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#FFD6A8" />
+                                    <stop offset="35%" stop-color="#E8A588" />
+                                    <stop offset="70%" stop-color="#FFD6A8" />
+                                    <stop offset="100%" stop-color="#B8925A" />
+                                </linearGradient>
+                                <path id="deliceArcTop" d="M 28,100 A 72,72 0 0,1 172,100" />
+                                <path id="deliceArcBottom" d="M 172,100 A 72,72 0 0,1 28,100" />
+                            </defs>
+                            <circle cx="100" cy="100" r="96" stroke="url(#deliceGold)" stroke-width="2.5" />
+                            <circle cx="100" cy="100" r="91" stroke="url(#deliceGold)" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.85" />
+                            <circle cx="100" cy="100" r="86" fill="url(#deliceBg)" stroke="url(#deliceGold)" stroke-width="1.5" />
+                            <circle cx="100" cy="100" r="62" stroke="url(#deliceGold)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6" />
+                            <text font-family="'Playfair Display', Georgia, serif" font-size="15" font-weight="800" letter-spacing="3" fill="url(#deliceGold)">
+                                <textPath href="#deliceArcTop" startOffset="50%" text-anchor="middle">
+                                    DÉLICE &amp; CO.
+                                </textPath>
+                            </text>
+                            <text font-family="'Manrope', sans-serif" font-size="8" font-weight="800" letter-spacing="3" fill="#F7E6DC" opacity="0.9">
+                                <textPath href="#deliceArcBottom" startOffset="50%" text-anchor="middle">
+                                    • ARTISAN PATISSERIE •
+                                </textPath>
+                            </text>
+                            <path d="M 85,96 Q 100,90 115,96" stroke="url(#deliceGold)" stroke-width="1.2" fill="none" opacity="0.7" />
+                            <circle cx="100" cy="74" r="2.5" fill="url(#deliceGold)" />
+                            <text x="100" y="112" font-family="'Cormorant Garamond', Georgia, serif" font-size="34" font-weight="700" font-style="italic" fill="url(#deliceGold)" text-anchor="middle">
+                                D&amp;Co
+                            </text>
+                            <text x="100" y="125" font-family="'Manrope', sans-serif" font-size="6.5" font-weight="800" letter-spacing="2.5" fill="#E4B49C" text-anchor="middle">
+                                EST. 2024
+                            </text>
+                        </svg>
+                    </span>
+                    <div class="f-brand-title">DÉLICE &amp; CO.</div>
+                    <p>Handcrafted celebration cakes, Korean bento boxes, nutri blasts, and espresso in Akota, Vadodara.</p>
+                    <p class="f-venture" style="margin-top:.45rem;font-size:.82rem;color:var(--peach-soft);letter-spacing:.02em;">
+                        A venture of <strong style="color:var(--brass);font-weight:600;">Bhairav Foods</strong>
+                    </p>
+                </div>
+                <div class="f-col">
+                    <h4>About Délice &amp; Co.</h4>
+                    <ul>
+                        <li><a href="index.html#about">Our Story</a></li>
+                        <li><a href="index.html#times">A Day at the Studio</a></li>
+                        <li><a href="index.html#curated-showcase">Signature Showcase</a></li>
+                        <li><a href="index.html#celebrations">Parties &amp; Events</a></li>
+                        <li><a href="dashboard.html" style="color:var(--peach);font-weight:700;"><span style="margin-right:5px;">📊</span>Admin Dashboard</a></li>
+                    </ul>
+                </div>
+                <div class="f-col">
+                    <h4>Cake Menu</h4>
+                    <ul>
+                        <li><a href="menu.html">Celebration Cakes</a></li>
+                        <li><a href="menu.html">Korean Bento Cakes</a></li>
+                        <li><a href="menu.html">Desserts &amp; Slices</a></li>
+                        <li><a href="menu.html">Nutri Blasts &amp; Coolers</a></li>
+                    </ul>
+                </div>
+                <div class="f-col">
+                    <h4>Visit &amp; Hours</h4>
+                    <ul>
+                        <li>Shop A-39, Shrenik Park, Opp. Akota Stadium, BPC Road, Vadodara 390020</li>
+                        <li>Open Every Day: 9:00 AM to 11:30 PM</li>
+                        <li><a href="https://maps.app.goo.gl/6Mj7EMAbhhWCWm5WA" target="_blank" rel="noopener">Get directions</a></li>
+                    </ul>
+                </div>
+                <div class="f-col">
+                    <h4>Get in Touch</h4>
+                    <ul>
+                        <li><a href="tel:+919909444882" style="color:#fff;font-weight:800;font-size:1rem">+91 99094 44882 (Main)</a></li>
+                        <li><a href="tel:+919909444882" style="color:var(--rust);font-weight:700">Call: +91 99094 44882</a></li>
+                        <li><a href="mailto:deliceandco.vadodara@gmail.com">deliceandco.vadodara@gmail.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="f-bot">
+                <span>© <span id="yr">2026</span> Délice &amp; Co. Café &amp; Cake Studio · A venture of Bhairav Foods. All rights reserved.</span>
+                <div class="f-bot-links">
+                    <a href="dashboard.html" class="f-admin-btn" title="Open Operations &amp; Admin Dashboard">
+                        <span class="f-admin-icon">📊</span>
+                        <span>Admin Dashboard</span>
+                    </a>
+                    <span class="f-bot-divider">•</span>
+                    <a href="#site">Back to top ↑</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <!-- SECURE CHECKOUT MODAL -->
+    <div class="order-modal-overlay" id="orderModalOverlay" onclick="window.closeOrderModal()"></div>
+    <div class="order-modal" id="orderModal" role="dialog" aria-labelledby="orderModalTitle" aria-modal="true">
+        <div class="order-modal-header">
+            <div class="order-modal-title-wrap">
+                <span class="order-modal-badge">🟢 100% Pure Veg &amp; Eggless</span>
+                <h3 id="orderModalTitle">Secure Patisserie Checkout</h3>
+            </div>
+            <button type="button" class="order-modal-close" onclick="window.closeOrderModal()" aria-label="Close">✕</button>
+        </div>
+        <form id="orderForm" onsubmit="event.preventDefault(); window.submitOrderCheckout();">
+            <div class="order-modal-body" id="orderModalBody">
+                <div id="modalOrderSummaryBox"></div>
+                <div class="form-section-title">👤 Customer Information</div>
+                <div class="form-row form-row-2">
+                    <div class="form-group">
+                        <label for="custName">Your Full Name <span class="req">*</span></label>
+                        <input type="text" id="custName" required placeholder="e.g. Rahul Patel" autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="custPhone">Mobile Number <span class="req">*</span></label>
+                        <input type="tel" id="custPhone" required placeholder="e.g. 9876543210" pattern="[0-9+\s-]{10,15}" autocomplete="tel">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="custEmail">Email Address (For Instant Receipt)</label>
+                    <input type="email" id="custEmail" placeholder="e.g. rahul@example.com" autocomplete="email">
+                </div>
+                <div class="form-section-title">📍 Vadodara Delivery Address</div>
+                <div class="form-group">
+                    <label for="custAddress">Full Street Address, Society &amp; Landmark <span class="req">*</span></label>
+                    <textarea id="custAddress" required rows="2" placeholder="Flat/House No., Society/Apartment, Landmark, Vadodara..."></textarea>
+                </div>
+                <div class="form-section-title">🕒 Preferred Delivery Schedule</div>
+                <div class="form-row form-row-2">
+                    <div class="form-group">
+                        <label for="custDate">Delivery Date <span class="req">*</span></label>
+                        <input type="date" id="custDate" required onchange="window.loadDeliverySlotsForDate(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label for="custSlot">Delivery Time Slot <span class="req">*</span></label>
+                        <select id="custSlot" required>
+                            <option value="Express 2-Hour Delivery">Express (Within 2 Hours) - Available</option>
+                            <option value="Morning (10:00 AM – 1:00 PM)">Morning (10:00 AM – 1:00 PM)</option>
+                            <option value="Afternoon (1:00 PM – 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
+                            <option value="Evening (4:00 PM – 7:00 PM)" selected>Evening (4:00 PM – 7:00 PM)</option>
+                            <option value="Night (7:00 PM – 10:00 PM)">Night (7:00 PM – 10:00 PM)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-section-title">💳 Select Payment Method</div>
+                <div class="checkout-payment-methods">
+                    <div class="payment-method-card active" id="payMethodRazorpay" onclick="window.selectPaymentMethod('RAZORPAY')">
+                        <div class="method-header">
+                            <span>💳</span>
+                            <span>Razorpay Gateway</span>
+                        </div>
+                        <div class="method-sub">Cards, NetBanking, UPI (Test Mode)</div>
+                    </div>
+                    <div class="payment-method-card" id="payMethodCOD" onclick="window.selectPaymentMethod('COD')">
+                        <div class="method-header">
+                            <span>💵</span>
+                            <span>Pay on Delivery</span>
+                        </div>
+                        <div class="method-sub">Cash or UPI upon delivery</div>
+                    </div>
+                </div>
+            </div>
+            <div class="order-modal-footer" id="orderModalFooter">
+                <div class="order-price-bar">
+                    <div class="order-price-label"><span>Total Payable:</span></div>
+                    <div class="order-price-val" id="orderFinalPrice">₹0</div>
+                </div>
+                <button type="submit" id="btnSubmitOrder" class="btn-razorpay-pay">
+                    <span id="btnSubmitOrderText">Pay Securely via Razorpay (Test Mode)</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Order Confirmation Screen -->
+        <div id="orderConfirmationScreen" class="order-confirmation-screen" style="display:none;"></div>
+    </div>
+
+
+
+    <!-- FLOATING ACTION BUTTONS SUITE -->
+    <div class="floating-suite">
+        <button type="button" class="float-btn float-sound" id="floatSoundBtn" onclick="window.toggleAudioTone()" title="Toggle Sound Feedback">
+            🔔
+        </button>
+        <button type="button" class="float-btn float-top" id="floatTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})" title="Back to Top">
+            ↑
+        </button>
+        <a href="https://wa.me/919909444882?text=Hello%20D%C3%A9lice%20%26%20Co.,%20I%20would%20like%20to%20track%20my%20cake%20order!" target="_blank" rel="noopener" class="float-btn float-wa" title="Chat with Patisserie Chef on WhatsApp">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#FFFFFF">
+                <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 20.15C10.57 20.15 9.12 19.75 7.85 19L7.55 18.82L4.43 19.64L5.26 16.6L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.8 7.37 7.5 3.67 12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.05 20.15Z"/>
+            </svg>
+        </a>
+    </div>
+
+    <!-- =================== MOBILE BOTTOM NAVIGATION BAR =================== -->
+    <nav class="mobile-bottom-bar" aria-label="Mobile Bottom Navigation">
+        <a href="index.html" class="mob-tab">
+            <span class="mob-icon">🏠</span>
+            <span class="mob-label">Home</span>
+        </a>
+        <a href="index.html#cakes" class="mob-tab">
+            <span class="mob-icon">🎂</span>
+            <span class="mob-label">Cakes</span>
+        </a>
+        <a href="custom.html" class="mob-tab">
+            <span class="mob-icon">🎨</span>
+            <span class="mob-label">Custom</span>
+        </a>
+        <a href="login.html" class="mob-tab" id="mobBottomAuthLink">
+            <span class="mob-icon">👤</span>
+            <span class="mob-label" id="mobBottomAuthLabel">Account</span>
+        </a>
+        <button type="button" class="mob-tab" onclick="window.openInstantCheckout()" style="background:none; border:none; color:inherit; cursor:pointer;">
+            <span class="mob-icon" style="color:var(--rust);">⚡</span>
+            <span class="mob-label" style="font-weight:700; color:var(--rust);">Order</span>
+        </button>
+    </nav>
+
+    <!-- TOAST -->
+    <div class="delice-toast" id="deliceToast">
+        <span id="toastMsg">Notification</span>
+    </div>
+
+    <!-- Production External SDKs and Core Adapters -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="main.js"></script>
+
+    <script>
+        const MILESTONES = [
+            { key: 'PLACED', label: 'Placed' },
+            { key: 'CONFIRMED', label: 'Confirmed' },
+            { key: 'PREPARING', label: 'Kitchen Prep' },
+            { key: 'BAKING', label: 'Oven Baking' },
+            { key: 'READY', label: 'Piped & Ready' },
+            { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+            { key: 'DELIVERED', label: 'Delivered' }
+        ];
+
+        window.searchOrderTracker = async function() {
+            const orderNum = document.getElementById('trackOrderNumber').value.trim();
+            const phone = document.getElementById('trackPhone').value.trim();
+            const btn = document.getElementById('btnTrackSubmit');
+            const container = document.getElementById('trackResultContainer');
+            const card = document.getElementById('trackCard');
+
+            if (!orderNum) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ Searching Database...</span>';
+
+            try {
+                const res = await window.DeliceDB.trackOrder(orderNum, phone);
+                if (!res.success) {
+                    container.style.display = 'block';
+                    card.innerHTML = `
+                        <div style="padding:40px 20px; text-align:center;">
+                            <div style="font-size:42px; margin-bottom:12px;">🍰</div>
+                            <h3 style="color:var(--navy); margin:0 0 8px;">Order Not Found</h3>
+                            <p style="color:#64748B; max-width:440px; margin:0 auto 16px; font-size:14px;">${res.message}</p>
+                            <p style="font-size:13px; color:#64748B;">Need help? Call kitchen support: <a href="tel:+919909444882" style="color:var(--rust); font-weight:700;">+91 99094 44882</a></p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderTrackingCard(res.order, res.items, res.history);
+                container.style.display = 'block';
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (err) {
+                alert('Error fetching order status: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔍 Track Cake Status</span>';
+            }
+        };
+
+        function renderTrackingCard(order, items, history) {
+            const card = document.getElementById('trackCard');
+            const currentStatus = (order.status || 'PLACED').toUpperCase();
+
+            // Find current stage index
+            let activeIdx = MILESTONES.findIndex(m => m.key === currentStatus);
+            if (activeIdx === -1) activeIdx = 0;
+
+            const progressPct = Math.min(Math.round((activeIdx / (MILESTONES.length - 1)) * 100), 100);
+
+            let stepperHtml = `
+                <div class="stepper-progress">
+                    <div class="stepper-line">
+                        <div class="stepper-line-fill" style="width:${progressPct}%;"></div>
+                    </div>
+            `;
+
+            MILESTONES.forEach((m, idx) => {
+                const isCompleted = idx < activeIdx;
+                const isActive = idx === activeIdx;
+                const cls = isCompleted ? 'completed' : (isActive ? 'active' : '');
+                const icon = isCompleted ? '✓' : (idx + 1);
+
+                stepperHtml += `
+                    <div class="step-node ${cls}">
+                        <div class="step-circle">${icon}</div>
+                        <div class="step-label">${m.label}</div>
+                    </div>
+                `;
+            });
+            stepperHtml += `</div>`;
+
+            // Items list
+            let itemsHtml = '';
+            (items || []).forEach(item => {
+                itemsHtml += `
+                    <div class="track-item-row">
+                        <div>
+                            <strong>${item.name}</strong> (${item.weight}) × ${item.qty}
+                            ${item.message ? `<div style="font-size:12px; color:#854D0E; font-style:italic;">Message: "${item.message}"</div>` : ''}
+                        </div>
+                        <div style="font-weight:700; color:var(--navy);">₹${Number(item.total).toLocaleString('en-IN')}</div>
+                    </div>
+                `;
+            });
+
+            const paymentBadge = order.payment_status === 'PAID' 
+                ? '<span style="background:#DCFCE7; color:#15803D; font-weight:700; padding:2px 8px; border-radius:4px; font-size:12px;">PAID ✓</span>'
+                : '<span style="background:#FEF3C7; color:#B45309; font-weight:700; padding:2px 8px; border-radius:4px; font-size:12px;">PENDING / UPI ON DELIVERY</span>';
+
+            const isNewSuccess = new URLSearchParams(window.location.search).get('success') === '1';
+            const successBannerHtml = isNewSuccess ? `
+                <div style="background:linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border:2px solid #10B981; border-radius:14px; padding:20px; text-align:center; margin-bottom:24px; box-shadow:0 10px 25px rgba(16,185,129,0.15);">
+                    <div style="font-size:36px; line-height:1; margin-bottom:8px;">🎉</div>
+                    <h2 style="font-family:'Playfair Display', serif; font-size:24px; color:#065F46; margin:0 0 6px;">Payment Successful &amp; Order Confirmed!</h2>
+                    <p style="color:#047857; font-size:14.5px; margin:0 0 12px; font-weight:500;">Your 100% pure veg artisan cake order has been scheduled in our Akota kitchen.</p>
+                    <div style="display:inline-flex; align-items:center; gap:8px; background:#FFFFFF; border:1px solid #6EE7B7; color:#065F46; font-size:13px; font-weight:700; padding:6px 14px; border-radius:20px;">
+                        <span>📧 Official Tax Invoice &amp; Order Receipt sent to customer email ✓</span>
+                    </div>
+                </div>
+            ` : '';
+
+            card.innerHTML = `
+                ${successBannerHtml}
+                <div class="track-header-bar">
+                    <div>
+                        <div style="font-size:12px; text-transform:uppercase; letter-spacing:1px; opacity:0.8;">Order Reference</div>
+                        <h2 style="margin:2px 0 0; font-size:22px; font-family:'Playfair Display', serif; color:#FFD6A8;">#${order.order_number}</h2>
+                    </div>
+                    <div>
+                        <span class="track-order-badge">${order.status}</span>
+                    </div>
+                </div>
+
+                <div class="stepper-container">
+                    ${stepperHtml}
+                </div>
+
+                <div class="order-content-grid">
+                    <div>
+                        <div class="order-section-title">🍰 Ordered Creations</div>
+                        ${itemsHtml}
+
+                        <div style="margin-top:16px; padding-top:12px; border-top:1.5px solid #E2E8F0;">
+                            <div class="track-meta-row">
+                                <span>Subtotal:</span>
+                                <span>₹${Number(order.subtotal).toLocaleString('en-IN')}</span>
+                            </div>
+                            ${Number(order.discount) > 0 ? `
+                            <div class="track-meta-row" style="color:#2E7D32;">
+                                <span>Coupon Discount:</span>
+                                <span>-₹${Number(order.discount).toLocaleString('en-IN')}</span>
+                            </div>` : ''}
+                            <div class="track-meta-row">
+                                <span>Vadodara Delivery:</span>
+                                <span style="color:#2E7D32; font-weight:700;">FREE</span>
+                            </div>
+                            <div class="track-meta-row" style="font-size:17px; font-weight:800; color:var(--navy); padding-top:8px; border-top:1px dashed #CBD5E1;">
+                                <span>Total Amount:</span>
+                                <span style="color:var(--rust);">₹${Number(order.total).toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="order-section-title">📍 Delivery Details</div>
+                        <div class="track-meta-row">
+                            <span style="color:#64748B;">Recipient:</span>
+                            <strong>${order.customer_name}</strong>
+                        </div>
+                        <div class="track-meta-row">
+                            <span style="color:#64748B;">Delivery Date:</span>
+                            <strong>${order.delivery_date}</strong>
+                        </div>
+                        <div class="track-meta-row">
+                            <span style="color:#64748B;">Delivery Slot:</span>
+                            <strong>${order.delivery_slot || 'Express 2-Hour'}</strong>
+                        </div>
+                        <div class="track-meta-row">
+                            <span style="color:#64748B;">Address:</span>
+                            <span style="text-align:right; max-width:200px;">${order.delivery_address}</span>
+                        </div>
+                        <div class="track-meta-row">
+                            <span style="color:#64748B;">Payment Status:</span>
+                            <span>${paymentBadge}</span>
+                        </div>
+
+
+
+                        <div style="margin-top:16px; background:#F8FAFC; padding:14px; border-radius:8px; border:1px solid #E2E8F0;">
+                            <div style="font-size:12.5px; font-weight:700; color:var(--navy); margin-bottom:4px;">Have Questions or Delivery Instructions?</div>
+                            <a href="tel:+919909444882" style="display:inline-flex; align-items:center; gap:6px; color:var(--rust); font-weight:700; font-size:13.5px; text-decoration:none; margin-top:4px;">
+                                <span>📞 Call Kitchen Support</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Instant Sample Tracking Demo Handler
+        window.loadSampleTrack = function(statusKey) {
+            const sampleOrder = {
+                id: 'demo-sample-order',
+                order_number: 'DL-2026-DEMO' + Math.floor(100 + Math.random() * 900),
+                customer_name: 'Ananya Sharma',
+                customer_phone: '+91 98765 43210',
+                delivery_address: 'B-402, Samudra Heights, Akota, Vadodara - 390020',
+                delivery_date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                delivery_slot: 'Express 2-Hour Delivery (In Progress)',
+                status: statusKey,
+                payment_status: statusKey === 'DELIVERED' ? 'PAID' : 'COD',
+                payment_method: 'Razorpay UPI',
+                subtotal: 1748,
+                discount: 175,
+                total: 1573,
+                notes: 'Please write in gold cursive: Happy 25th Anniversary Mom & Dad! 🎂'
+            };
+
+            const sampleItems = [
+                {
+                    cake_name: 'The Velvet Rose & Raspberry Chiffon',
+                    weight: '1 Kg',
+                    price: 1699,
+                    quantity: 1,
+                    custom_message: 'Happy 25th Anniversary Mom & Dad! 🎂'
+                },
+                {
+                    cake_name: 'Artisan Birthday Golden Candles & Sparkler Pack',
+                    weight: 'Set of 6',
+                    price: 49,
+                    quantity: 1
+                }
+            ];
+
+            const sampleHistory = [
+                { status: 'PLACED', created_at: new Date(Date.now() - 3600000).toISOString() },
+                { status: 'CONFIRMED', created_at: new Date(Date.now() - 3000000).toISOString() },
+                { status: 'PREPARING', created_at: new Date(Date.now() - 2400000).toISOString() }
+            ];
+
+            if (statusKey === 'BAKING' || statusKey === 'OUT_FOR_DELIVERY' || statusKey === 'DELIVERED') {
+                sampleHistory.push({ status: 'BAKING', created_at: new Date(Date.now() - 1800000).toISOString() });
+            }
+            if (statusKey === 'OUT_FOR_DELIVERY' || statusKey === 'DELIVERED') {
+                sampleHistory.push({ status: 'READY', created_at: new Date(Date.now() - 900000).toISOString() });
+                sampleHistory.push({ status: 'OUT_FOR_DELIVERY', created_at: new Date(Date.now() - 300000).toISOString() });
+            }
+            if (statusKey === 'DELIVERED') {
+                sampleHistory.push({ status: 'DELIVERED', created_at: new Date().toISOString() });
+            }
+
+            document.getElementById('trackOrderNumber').value = sampleOrder.order_number;
+            renderTrackingCard(sampleOrder, sampleItems, sampleHistory);
+            const container = document.getElementById('trackResultContainer');
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        // Auto-check URL query parameters e.g. track.html?order=DL-2026-000102
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const ord = params.get('order');
+            if (ord) {
+                document.getElementById('trackOrderNumber').value = ord;
+                window.searchOrderTracker();
+            }
+        });
+    </script>
+</body>
+</html>

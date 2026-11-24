@@ -1,0 +1,57 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+
+# Security: Block sensitive data files from public downloads
+[[redirects]]
+  from = "/orders_data.json"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/.env*"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/*.sql"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/*.py"
+  to = "/404.html"
+  status = 404
+
+# API Serverless Functions
+[[redirects]]
+  from = "/api/send-email-receipt"
+  to = "/.netlify/functions/send-email-receipt"
+  status = 200
+
+[[redirects]]
+  from = "/api/create-razorpay-order"
+  to = "/.netlify/functions/orders"
+  status = 200
+
+[[redirects]]
+  from = "/api/verify-payment"
+  to = "/.netlify/functions/orders"
+  status = 200
+
+[[redirects]]
+  from = "/api/submit-order"
+  to = "/.netlify/functions/orders"
+  status = 200
+
+[[redirects]]
+  from = "/api/orders"
+  to = "/.netlify/functions/orders"
+  status = 200

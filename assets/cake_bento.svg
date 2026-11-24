@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bentoBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCFAF5"/>
+      <stop offset="100%" stop-color="#F2ECE4"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FDFBF7"/>
+      <stop offset="100%" stop-color="#EDE2D2"/>
+    </linearGradient>
+    <filter id="shadow4" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4A3425" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="450" rx="16" fill="url(#bentoBg)"/>
+  <circle cx="300" cy="230" r="180" fill="#FFF5EC" opacity="0.6"/>
+
+  <!-- Sugarcane Bento Box Exterior -->
+  <g filter="url(#shadow4)">
+    <!-- Box Bottom Shell -->
+    <path d="M140 280 L160 380 Q162 390 175 390 L425 390 Q438 390 440 380 L460 280 Z" fill="#E8DDD0"/>
+    <!-- Box Lip Outer Rim -->
+    <path d="M130 270 Q130 260 145 260 L455 260 Q470 260 470 270 L465 285 Q465 292 450 292 L150 292 Q135 292 135 285 Z" fill="url(#boxGrad)"/>
+    <!-- Box Interior Well -->
+    <ellipse cx="300" cy="280" rx="155" ry="35" fill="#DDCFC0"/>
+    <!-- Parchment Paper Liner with Scalloped Edges -->
+    <ellipse cx="300" cy="275" rx="145" ry="32" fill="#FFFFFF"/>
+    <ellipse cx="300" cy="272" rx="140" ry="30" fill="#FAF5EE"/>
+  </g>
+
+  <!-- Petite Bento Cake -->
+  <g filter="url(#shadow4)">
+    <path d="M220 200 C220 240 220 250 220 270 C220 288 380 288 380 270 L380 200 Z" fill="#EAD9F2"/>
+    <ellipse cx="300" cy="200" rx="80" ry="20" fill="#F3E5FA"/>
+
+    <!-- Pastel Cream Piping Shell Border -->
+    <g fill="#FADCD9">
+      <circle cx="225" cy="198" r="7"/>
+      <circle cx="240" cy="207" r="7"/>
+      <circle cx="260" cy="214" r="7"/>
+      <circle cx="280" cy="218" r="7"/>
+      <circle cx="300" cy="219" r="7"/>
+      <circle cx="320" cy="218" r="7"/>
+      <circle cx="340" cy="214" r="7"/>
+      <circle cx="360" cy="207" r="7"/>
+      <circle cx="375" cy="198" r="7"/>
+    </g>
+
+    <!-- Handwritten Inscription in Center -->
+    <text x="300" y="196" font-family="'Caveat', cursive, sans-serif" font-size="20" font-weight="700" fill="#8E5E9E" text-anchor="middle">Happy B-day!</text>
+    <text x="300" y="210" font-family="'Caveat', cursive, sans-serif" font-size="16" fill="#C2785C" text-anchor="middle">♡</text>
+
+    <!-- Cute Cherries on Corner -->
+    <circle cx="250" cy="175" r="9" fill="#E63946"/>
+    <circle cx="248" cy="172" r="2" fill="#FFFFFF"/>
+    <path d="M250 168 Q255 150 265 145" stroke="#4A6B3D" stroke-width="2" fill="none"/>
+  </g>
+
+  <!-- Little Wooden Bento Fork -->
+  <g transform="rotate(35 480 340)">
+    <rect x="470" y="300" width="14" height="80" rx="3" fill="#D4B996"/>
+    <path d="M466 285 L488 285 L486 300 L468 300 Z" fill="#D4B996"/>
+    <line x1="472" y1="285" x2="472" y2="295" stroke="#B8956E" stroke-width="1.5"/>
+    <line x1="477" y1="285" x2="477" y2="295" stroke="#B8956E" stroke-width="1.5"/>
+    <line x1="482" y1="285" x2="482" y2="295" stroke="#B8956E" stroke-width="1.5"/>
+  </g>
+
+  <!-- Tag Pill -->
+  <g transform="translate(420, 30)">
+    <rect width="150" height="34" rx="17" fill="#FFFFFF" filter="url(#shadow4)"/>
+    <text x="75" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#8E5E9E" text-anchor="middle">🎀 KOREAN BENTO</text>
+  </g>
+</svg>

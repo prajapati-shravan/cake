@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="pistBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FCFAF5"/>
+      <stop offset="100%" stop-color="#EDF5EE"/>
+    </linearGradient>
+    <linearGradient id="pistGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F2F8ED"/>
+      <stop offset="100%" stop-color="#DCECCF"/>
+    </linearGradient>
+    <filter id="shadow8" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#2D4026" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="600" height="450" rx="16" fill="url(#pistBg)"/>
+  <circle cx="300" cy="240" r="190" fill="#E8F4E5" opacity="0.6"/>
+
+  <!-- Stand -->
+  <g filter="url(#shadow8)">
+    <ellipse cx="300" cy="385" rx="100" ry="14" fill="#D8C8B5"/>
+    <ellipse cx="300" cy="380" rx="90" ry="12" fill="#FFFFFF"/>
+    <path d="M280 340 L285 380 L315 380 L320 340 Z" fill="#E6DAD0"/>
+    <ellipse cx="300" cy="344" rx="180" ry="24" fill="#C9B59E"/>
+    <ellipse cx="300" cy="340" rx="180" ry="22" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Cake Body -->
+  <g filter="url(#shadow8)">
+    <path d="M180 230 C180 280 180 300 180 320 C180 340 420 340 420 320 L420 230 Z" fill="url(#pistGrad)"/>
+    <ellipse cx="300" cy="230" rx="120" ry="24" fill="#E4F0D8"/>
+    <!-- Pistachio Crumb Coating base -->
+    <path d="M180 290 Q300 310 420 290 L420 320 C420 340 180 340 180 320 Z" fill="#95B57A" opacity="0.4"/>
+  </g>
+
+  <!-- Pistachio Nuts & Blackberry accents on Top -->
+  <g>
+    <!-- Pistachio Slivers -->
+    <g fill="#608A46">
+      <ellipse cx="260" cy="220" rx="7" ry="3" transform="rotate(30 260 220)"/>
+      <ellipse cx="280" cy="230" rx="7" ry="3" transform="rotate(-45 280 230)"/>
+      <ellipse cx="320" cy="235" rx="7" ry="3" transform="rotate(20 320 235)"/>
+      <ellipse cx="340" cy="225" rx="7" ry="3" transform="rotate(-30 340 225)"/>
+      <ellipse cx="300" cy="225" rx="7" ry="3" transform="rotate(60 300 225)"/>
+    </g>
+
+    <!-- Blackberries -->
+    <g>
+      <circle cx="290" cy="210" r="13" fill="#2E1C2B"/>
+      <circle cx="288" cy="207" r="3" fill="#5C3B57"/>
+      <circle cx="315" cy="215" r="11" fill="#251623"/>
+      <circle cx="313" cy="212" r="2.5" fill="#5C3B57"/>
+    </g>
+
+    <!-- Edible Rose Petals -->
+    <path d="M240 215 C235 200 255 195 255 210 C250 220 240 220 240 215" fill="#FF758F"/>
+    <path d="M350 210 C345 195 365 195 365 210 C360 220 350 220 350 210" fill="#FF758F"/>
+  </g>
+
+  <g transform="translate(420, 30)">
+    <rect width="150" height="34" rx="17" fill="#FFFFFF" filter="url(#shadow8)"/>
+    <text x="75" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#4E7337" text-anchor="middle">🌿 PISTACHIO ROSE</text>
+  </g>
+</svg>
