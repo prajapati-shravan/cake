@@ -1,8 +1,8 @@
 # Security: Block sensitive data and scripts from direct public access
-/orders_data.json         /404.html                                404
-/.env*                    /404.html                                404
-/*.sql                    /404.html                                404
-/*.py                     /404.html                                404
+/orders_data.json         /404.html                                302
+/.env*                    /404.html                                302
+/*.sql                    /404.html                                302
+/*.py                     /404.html                                302
 
 # API Serverless Functions
 /api/send-email-receipt   /.netlify/functions/send-email-receipt   200
@@ -18,6 +18,3 @@
 /about                    /about.html                              200
 /login                    /login.html                              200
 /dashboard                /dashboard.html                          200
-
-# Fallback
-/*                        /index.html                              200

@@ -41,3 +41,7 @@ _backup_pre_organization/
 .agent/
 .agents/
 .gsd/
+adapters/
+archive/
+model_capabilities.yaml
+PROJECT_STRUCTURE_REPORT.md

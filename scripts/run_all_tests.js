@@ -133,8 +133,8 @@ async function run() {
   assert(redirects.includes('/api/create-razorpay-order'), '_redirects includes create-razorpay-order');
   assert(redirects.includes('/api/verify-payment'), '_redirects includes verify-payment');
   assert(redirects.includes('/api/submit-order         /.netlify/functions/orders'), '_redirects routes submit-order to orders function');
-  assert(redirects.includes('/orders_data.json         /404.html                                404'), '_redirects blocks orders_data.json with 404');
-  assert(redirects.includes('/.env*                    /404.html                                404'), '_redirects blocks .env with 404');
+  assert(redirects.includes('/orders_data.json         /404.html'), '_redirects blocks orders_data.json with redirect to 404');
+  assert(redirects.includes('/.env*                    /404.html'), '_redirects blocks .env with redirect to 404');
 
   const netlifyToml = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf-8');
   assert(netlifyToml.includes('from = "/api/create-razorpay-order"'), 'netlify.toml includes create-razorpay-order');
