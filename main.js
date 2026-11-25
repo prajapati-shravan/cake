@@ -2542,21 +2542,46 @@ Customer Support: +91 99094 44882 | orders@deliceandcake.in`;
         });
     }
 
-    // Hamburger button binding for index.html
+    // Hamburger button binding for storefront pages
     const hamburgerBtn = $('hamburgerBtn');
     const headerBottom = document.querySelector('.header-bottom');
 
     if (hamburgerBtn && headerBottom) {
-        hamburgerBtn.addEventListener('click', () => {
-            headerBottom.classList.toggle('open');
-            hamburgerBtn.textContent = headerBottom.classList.contains('open') ? '✕' : '☰';
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = headerBottom.classList.toggle('open');
+            hamburgerBtn.textContent = isOpen ? '✕' : '☰';
+            hamburgerBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
 
-        headerBottom.querySelectorAll('a').forEach(link => {
+        headerBottom.querySelectorAll('a, button').forEach(link => {
             link.addEventListener('click', () => {
                 headerBottom.classList.remove('open');
-                if (hamburgerBtn) hamburgerBtn.textContent = '☰';
+                if (hamburgerBtn) {
+                    hamburgerBtn.textContent = '☰';
+                    hamburgerBtn.setAttribute('aria-expanded', 'false');
+                }
             });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (headerBottom.classList.contains('open') && !headerBottom.contains(e.target) && e.target !== hamburgerBtn && !hamburgerBtn.contains(e.target)) {
+                headerBottom.classList.remove('open');
+                if (hamburgerBtn) {
+                    hamburgerBtn.textContent = '☰';
+                    hamburgerBtn.setAttribute('aria-expanded', 'false');
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && headerBottom.classList.contains('open')) {
+                headerBottom.classList.remove('open');
+                if (hamburgerBtn) {
+                    hamburgerBtn.textContent = '☰';
+                    hamburgerBtn.setAttribute('aria-expanded', 'false');
+                }
+            }
         });
     }
 

@@ -1198,4 +1198,16 @@ body {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+  .form-control,
+  .dash-input,
+  .dash-select,
+  .dash-textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+  .btn-action,
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+  }
 }

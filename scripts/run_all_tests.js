@@ -173,8 +173,14 @@ async function run() {
     env: { ...process.env, PORT: '3099', RAZORPAY_KEY_SECRET: 'test_secret_for_audit_verification' }
   });
 
-  // Wait for server to start
-  await new Promise(r => setTimeout(r, 1500));
+  serverProc.stderr.on('data', d => console.error('Server err:', d.toString()));
+
+  // Wait for server to start with polling
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 300));
+    const probe = await httpGet('/api/health');
+    if (probe.status === 200) break;
+  }
 
   function httpGet(urlPath) {
     return new Promise((resolve) => {

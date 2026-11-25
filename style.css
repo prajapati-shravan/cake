@@ -738,8 +738,10 @@ header {
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 50%;
     display: flex;
@@ -747,6 +749,7 @@ header {
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s;
+    touch-action: manipulation;
 }
 .wishlist-btn svg {
     width: 18px;
@@ -904,19 +907,36 @@ header {
     display: inline-flex;
     align-items: center;
     border: 1px solid var(--navy);
-    border-radius: 4px;
+    border-radius: 6px;
     background: #fff;
+    overflow: hidden;
 }
 .qty-stepper button {
-    padding: 4px 8px;
+    padding: 6px 10px;
+    min-width: 38px;
+    min-height: 38px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--navy);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    transition: background 0.15s ease;
+}
+.qty-stepper button:active {
+    background: #EDF2F7;
 }
 .qty-val {
-    padding: 0 6px;
-    font-size: 13px;
+    padding: 0 8px;
+    font-size: 13.5px;
     font-weight: 700;
     color: var(--navy);
+    min-width: 24px;
+    text-align: center;
 }
 
 /* =====================================================================
@@ -1825,7 +1845,8 @@ footer .wrap {
    ===================================================================== */
 @media (max-width: 1024px) {
     .product-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
     }
     .about-box {
         grid-template-columns: 1fr;
@@ -1847,6 +1868,7 @@ footer .wrap {
 @media (max-width: 768px) {
     .header-top {
         padding: 12px var(--gutter);
+        gap: 12px;
     }
     .header-bottom {
         display: none;
@@ -1858,17 +1880,33 @@ footer .wrap {
         display: flex;
     }
     .hamburger {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 24px;
+        color: var(--navy);
+        touch-action: manipulation;
+    }
+    .hamburger:active {
+        background: rgba(27, 51, 88, 0.08);
     }
     .header-actions .track-link, .header-actions .signin-link {
         display: none;
     }
     .hero {
-        margin: 12px var(--gutter) 30px;
+        margin: 12px var(--gutter) 24px;
     }
     .hero-banner-inner {
         grid-template-columns: 1fr;
-        padding: 24px 20px;
+        padding: 24px 18px;
         text-align: center;
         min-height: auto;
     }
@@ -1878,10 +1916,51 @@ footer .wrap {
     .hero-img-wrap img {
         max-height: 240px;
     }
+
+    /* 2-Column Responsive Product Catalog on Mobile */
     .product-grid {
-        grid-template-columns: 1fr;
-        gap: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
+    .product-card {
+        border-radius: 12px;
+        border: 1px solid #EAE6DF;
+    }
+    .product-img {
+        height: 160px;
+    }
+    .product-body {
+        padding: 10px 10px 12px;
+    }
+    .product-name {
+        font-size: 13.5px;
+        line-height: 1.25;
+        min-height: 34px;
+    }
+    .product-desc-short {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 11px;
+        line-height: 1.35;
+        margin-bottom: 8px;
+    }
+    .weight-selector-row {
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+    .weight-chip {
+        padding: 4px 6px;
+        font-size: 10.5px;
+        border-radius: 6px;
+    }
+    .btn-add, .btn-card-wa {
+        min-height: 38px;
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+
     .footer-bottom {
         flex-direction: column;
         align-items: flex-start;
@@ -1891,6 +1970,41 @@ footer .wrap {
         left: 16px;
         padding: 6px 12px;
         font-size: 11.5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-cta-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 10px;
+    }
+    .hero-cta-group .btn-hero,
+    .hero-cta-group .btn-hero-outline {
+        width: 100%;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 350px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .product-img {
+        height: 190px;
+    }
+    .logo-name {
+        font-size: 18px;
+        letter-spacing: 0.5px;
+    }
+    .logo-emblem {
+        width: 36px;
+        height: 36px;
     }
 }
 
@@ -2676,33 +2790,38 @@ form#orderForm {
 .modal-qty-ctrl {
     display: inline-flex;
     align-items: center;
-    border: 1px solid #CBD5E1;
-    border-radius: 4px;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
     background: #fff;
     overflow: hidden;
 }
 .modal-qty-ctrl button {
     background: none;
     border: none;
-    width: 26px;
-    height: 26px;
-    font-size: 14px;
+    min-width: 36px;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--navy);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
+    transition: background 0.15s ease;
 }
+.modal-qty-ctrl button:active,
 .modal-qty-ctrl button:hover {
     background: #F1F5F9;
 }
 .modal-qty-ctrl span {
-    padding: 0 8px;
-    font-size: 12.5px;
+    padding: 0 10px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--navy);
-    min-width: 18px;
+    min-width: 24px;
     text-align: center;
 }
 .modal-item-total {
@@ -3470,6 +3589,42 @@ header.site .strip .in a {
         flex-direction: column !important;
         gap: 0 !important;
     }
+    .studio-perks-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .studio-consultation-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px 20px;
+        gap: 18px;
+    }
+    .studio-consult-info p {
+        margin: 0 auto;
+    }
+    .studio-consult-cta {
+        width: 100%;
+        justify-content: center;
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 480px) {
+    .studio-perks-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .studio-stage-wrapper, .studio-cake-stage, .studio-photo-view {
+        height: 250px;
+    }
+    .studio-btn-group {
+        flex-direction: column;
+    }
+    .studio-preview-btn, .studio-basket-btn {
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+    }
 }
 
 /* =====================================================================
@@ -4152,8 +4307,10 @@ button:active,
     position: absolute;
     top: 14px;
     right: 14px;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
     background: rgba(0,0,0,0.5);
     color: #FFFFFF;
     border-radius: 50%;
@@ -4166,6 +4323,7 @@ button:active,
     z-index: 10;
     backdrop-filter: blur(4px);
     transition: background 0.2s, transform 0.2s;
+    touch-action: manipulation;
 }
 .qv-close-btn:hover {
     background: rgba(0,0,0,0.8);
@@ -4479,8 +4637,10 @@ button:active,
     background: rgba(255, 255, 255, 0.15);
     border: none;
     color: #FFFFFF;
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
     border-radius: 50%;
     font-size: 16px;
     font-weight: 700;
@@ -4489,6 +4649,7 @@ button:active,
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease;
+    touch-action: manipulation;
 }
 
 .order-profile-close-btn:hover {
@@ -4741,8 +4902,10 @@ button:active,
     position: absolute;
     top: 14px;
     right: 16px;
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
     border-radius: 50%;
     border: 1px solid rgba(27, 51, 88, 0.12);
     background: #FFFFFF;
@@ -4754,6 +4917,7 @@ button:active,
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    touch-action: manipulation;
 }
 
 .auth-prompt-close-btn:hover {
