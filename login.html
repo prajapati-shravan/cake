@@ -472,10 +472,28 @@
         switchAuthTab('create');
       }
 
-      // Check for Google OAuth callback return
+      // Check for Google OAuth callback return or error
       var hash = window.location.hash || '';
       var search = window.location.search || '';
-      var isOAuthReturn = hash.includes('access_token') || search.includes('code=') || hash.includes('error=');
+
+      var hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+      var searchParams = new URLSearchParams(search);
+      var oauthError = hashParams.get('error_description') || searchParams.get('error_description') || hashParams.get('error') || searchParams.get('error');
+
+      if (oauthError) {
+        var signinAlert = document.getElementById('signinAlert');
+        if (signinAlert) {
+          signinAlert.textContent = 'Google Sign-In: ' + decodeURIComponent(oauthError).replace(/\+/g, ' ');
+          signinAlert.className = 'alert-box alert-error';
+          signinAlert.style.display = 'block';
+        }
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {}
+        return;
+      }
+
+      var isOAuthReturn = hash.includes('access_token') || search.includes('code=');
 
       if (isOAuthReturn) {
         var signinAlert = document.getElementById('signinAlert');
@@ -519,12 +537,23 @@
                 sessionStorage.removeItem('delice_oauth_target_redirect');
                 window.location.replace(storedTarget);
                 return;
+              } else {
+                if (signinAlert) {
+                  signinAlert.textContent = 'Google session could not be verified. Please ensure your site URL is added in Supabase and Google Cloud Console.';
+                  signinAlert.className = 'alert-box alert-error';
+                  signinAlert.style.display = 'block';
+                }
               }
             }
           } catch (oe) {
             console.warn('OAuth session verification:', oe);
+            if (signinAlert) {
+              signinAlert.textContent = 'Google session error: ' + (oe.message || 'Verification failed');
+              signinAlert.className = 'alert-box alert-error';
+              signinAlert.style.display = 'block';
+            }
           }
-        }, 350);
+        }, 500);
       }
 
       // Check if user is already logged in
@@ -717,6 +746,11 @@
         if (btn) {
           btn.style.opacity = '0.7';
           btn.querySelector('span').textContent = 'Connecting to Google...';
+        }
+
+        var host = window.location.hostname || '';
+        if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+          throw new Error('Google Sign-In requires an HTTPS domain (e.g. your Netlify site) or localhost. Google strictly blocks raw IP addresses (192.168.x.x). Please test on your Netlify URL or sign in with email/password.');
         }
 
         var redirectUrl = window.location.origin + window.location.pathname;
