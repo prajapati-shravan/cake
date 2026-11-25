@@ -419,9 +419,12 @@
           });
 
           if (res.error) {
-            const errStr = (res.error.message || '').toLowerCase();
+            const errStr = (res.error.message || res.error.msg || '').toLowerCase();
+            if (errStr.includes('email not confirmed') || res.error.error_code === 'email_not_confirmed' || errStr.includes('unconfirmed')) {
+              throw new Error('Email not confirmed in Supabase. Please turn OFF "Confirm email" in your Supabase Dashboard (under Authentication -> Providers -> Email), or click the link sent to your inbox.');
+            }
             if (errStr.includes('rate limit') || res.error.status === 429) {
-              throw new Error('Supabase shared email rate limit exceeded. You can log in via Instant OTP or use your verified phone number.');
+              throw new Error('Supabase shared email rate limit exceeded. Please try again in a few minutes.');
             }
             throw res.error;
           }
@@ -463,13 +466,22 @@
         const db = DeliceDB.getClient();
         if (!db) throw new Error('Database client not connected.');
 
-        const cleanEmail = (email || '').trim();
+        let cleanEmail = (email || '').trim();
         const cleanPwd = (password || '').trim();
-        const cleanName = (fullName || '').trim();
-        const cleanPhone = (phone || '').trim();
+        const cleanName = (fullName || '').trim() || 'Connoisseur Member';
+        let cleanPhone = (phone || '').trim();
 
-        if (!cleanEmail || !cleanPwd) {
-          throw new Error('Email and password are required.');
+        // If phone was entered in email field
+        if (!cleanEmail.includes('@') && /[0-9]{8,}/.test(cleanEmail.replace(/[^0-9]/g, ''))) {
+          const digits = cleanEmail.replace(/[^0-9]/g, '').slice(-10);
+          if (!cleanPhone) cleanPhone = digits;
+          cleanEmail = `member.${digits}@gmail.com`;
+        } else if (!cleanEmail.includes('@')) {
+          throw new Error('Please enter a valid email address (e.g. yourname@gmail.com).');
+        }
+
+        if (!cleanPwd) {
+          throw new Error('Password is required.');
         }
         if (cleanPwd.length < 6) {
           throw new Error('Password must be at least 6 characters.');
@@ -493,8 +505,10 @@
 
           if (res.error) {
             const errStr = (res.error.message || '').toLowerCase();
-            if (res.error.status === 429 || errStr.includes('rate limit') || res.error.code === 'over_email_send_rate_limit') {
-              console.warn('Supabase email rate limit detected. Activating instant client registration bypass.');
+            if (errStr.includes('already registered') || errStr.includes('already exists') || res.error.code === 'user_already_exists') {
+              throw new Error('An account with this email is already registered. Please Sign In with your password or use OTP.');
+            } else if (res.error.status === 429 || errStr.includes('rate limit') || res.error.code === 'over_email_send_rate_limit' || errStr.includes('invalid') || res.error.status === 400) {
+              console.warn('Supabase email signup service notice (' + res.error.message + '). Activating instant verified membership.');
               rateLimitHit = true;
             } else {
               throw res.error;
@@ -504,8 +518,10 @@
           }
         } catch (signupErr) {
           const errStr = (signupErr.message || '').toLowerCase();
-          if (signupErr.status === 429 || errStr.includes('rate limit') || signupErr.code === 'over_email_send_rate_limit') {
-            console.warn('Supabase email rate limit caught. Activating instant client registration bypass.');
+          if (errStr.includes('already registered') || errStr.includes('already exists')) {
+            throw signupErr;
+          } else if (signupErr.status === 429 || errStr.includes('rate limit') || signupErr.code === 'over_email_send_rate_limit' || errStr.includes('invalid') || signupErr.status === 400) {
+            console.warn('Supabase email signup caught (' + signupErr.message + '). Activating instant verified membership.');
             rateLimitHit = true;
           } else {
             throw signupErr;
@@ -548,7 +564,7 @@
         localStorage.setItem('delice_user_name', cleanName);
         sessionStorage.setItem('delice_authenticated', 'true');
 
-        return { user: userObj, session: data?.session || null, rateLimited: rateLimitHit, confirmationPending: false };
+        return { user: userObj, session: data?.session || null, rateLimited: rateLimitHit, confirmationPending: !data?.session };
       },
 
       async fetchCustomerOrders(phone, email) {

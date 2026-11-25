@@ -14,6 +14,7 @@ Provides:
 import sys
 import http.server
 import socketserver
+import socket
 import urllib.request
 import urllib.parse
 import json
@@ -24,6 +25,7 @@ import mimetypes
 import smtplib
 import html
 import threading
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
@@ -391,8 +393,57 @@ def dispatch_email_in_background(order_data, host_header=None):
     t = threading.Thread(target=send_customer_order_email, args=(order_data, host_header), daemon=True)
     t.start()
 
+# -------------------------------------------------------------
+# IN-MEMORY SLIDING WINDOW IP RATE LIMITER
+# Guards backend /api/ endpoints against automated abuse, scraping & credential attacks
+# -------------------------------------------------------------
+class IPRateLimiter:
+    def __init__(self, max_requests=60, window_seconds=60):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.ip_records = {}  # ip -> list of float timestamps
+        self.lock = threading.Lock()
+
+    def get_client_ip(self, handler):
+        # Support X-Forwarded-For if behind a reverse proxy / CDN
+        xff = handler.headers.get('X-Forwarded-For')
+        if xff:
+            return xff.split(',')[0].strip()
+        client_addr = getattr(handler, 'client_address', None)
+        if client_addr and len(client_addr) > 0:
+            return str(client_addr[0])
+        return '127.0.0.1'
+
+    def is_allowed(self, client_ip):
+        now = time.time()
+        window_start = now - self.window_seconds
+
+        with self.lock:
+            history = self.ip_records.get(client_ip, [])
+            active = [t for t in history if t > window_start]
+
+            if len(active) >= self.max_requests:
+                retry_after = max(1, int(active[0] + self.window_seconds - now))
+                self.ip_records[client_ip] = active
+                return False, retry_after
+
+            active.append(now)
+            self.ip_records[client_ip] = active
+
+            # Memory safeguard: prune stale IPs when table grows beyond 2000 entries
+            if len(self.ip_records) > 2000:
+                cutoff = now - (self.window_seconds * 2)
+                self.ip_records = {
+                    ip: ts for ip, ts in self.ip_records.items()
+                    if ts and ts[-1] > cutoff
+                }
+
+            return True, 0
+
+GLOBAL_RATE_LIMITER = IPRateLimiter(max_requests=60, window_seconds=60)
+
 class DeliceCommerceHandler(http.server.SimpleHTTPRequestHandler):
-    def send_json(self, status_code, data):
+    def send_json(self, status_code, data, extra_headers=None):
         body = json.dumps(data).encode('utf-8')
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json')
@@ -400,6 +451,9 @@ class DeliceCommerceHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PATCH')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey')
+        if extra_headers:
+            for hk, hv in extra_headers.items():
+                self.send_header(hk, hv)
         self.end_headers()
         self.wfile.write(body)
 
@@ -443,6 +497,17 @@ class DeliceCommerceHandler(http.server.SimpleHTTPRequestHandler):
                 'supabase_configured': bool(SUPABASE_URL and SUPABASE_KEY),
                 'razorpay_configured': bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)
             })
+
+        # Apply Rate Limiting to GET /api/ endpoints (health check is exempt for uptime monitoring)
+        if path.startswith('/api/'):
+            client_ip = GLOBAL_RATE_LIMITER.get_client_ip(self)
+            allowed, retry_after = GLOBAL_RATE_LIMITER.is_allowed(client_ip)
+            if not allowed:
+                return self.send_json(429, {
+                    'success': False,
+                    'error': f'Rate limit exceeded. Too many requests from your IP. Please retry in {retry_after} seconds.',
+                    'retry_after': retry_after
+                }, extra_headers={'Retry-After': str(retry_after)})
 
         # API: Public Config (Safe keys only)
         if path == '/api/config':
@@ -527,6 +592,17 @@ class DeliceCommerceHandler(http.server.SimpleHTTPRequestHandler):
             body = json.loads(raw_body)
         except Exception:
             body = {}
+
+        # Apply Rate Limiting to POST /api/ endpoints
+        if path.startswith('/api/'):
+            client_ip = GLOBAL_RATE_LIMITER.get_client_ip(self)
+            allowed, retry_after = GLOBAL_RATE_LIMITER.is_allowed(client_ip)
+            if not allowed:
+                return self.send_json(429, {
+                    'success': False,
+                    'error': f'Rate limit exceeded. Too many requests from your IP. Please retry in {retry_after} seconds.',
+                    'retry_after': retry_after
+                }, extra_headers={'Retry-After': str(retry_after)})
 
         # -------------------------------------------------------------
         # API 0: SYNC / CREATE / UPDATE ORDER
@@ -973,14 +1049,33 @@ print(f" Supabase Backend: {SUPABASE_URL}")
 print(f" Multi-Threaded Non-Blocking I/O: ENABLED")
 print(f"==================================================")
 
-class ThreadingDeliceServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+class ThreadingDeliceServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-if __name__ == '__main__':
-    with ThreadingDeliceServer(("", PORT), DeliceCommerceHandler) as httpd:
+class DualStackDeliceServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+    address_family = socket.AF_INET6
+
+    def server_bind(self):
         try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        except Exception:
             pass
+        super().server_bind()
+
+if __name__ == '__main__':
+    try:
+        with DualStackDeliceServer(('::', PORT), DeliceCommerceHandler) as httpd:
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                pass
+    except Exception:
+        with ThreadingDeliceServer(("", PORT), DeliceCommerceHandler) as httpd:
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                pass
 

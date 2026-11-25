@@ -38,3 +38,6 @@ stitch_custom_login_page_design.zip
 # Local backups and AI agent internal files
 _backup_pre_organization/
 .gemini/
+.agent/
+.agents/
+.gsd/

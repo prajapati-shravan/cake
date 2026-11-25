@@ -369,33 +369,30 @@
     };
 
     // =========================================================================
-    // CONNOISSEUR CLUB AUTHENTICATION GATE & ORDER INTERCEPTOR
+    // AUTHENTICATION & LOGIN GATE CONTROLLER
     // =========================================================================
     window.isUserLoggedIn = function () {
         try {
-            // 1. Supabase client sync check
-            if (window.DeliceDB && window.DeliceDB.auth && typeof window.DeliceDB.auth.getCurrentUserSync === 'function') {
-                const dbUser = window.DeliceDB.auth.getCurrentUserSync();
-                if (dbUser && (dbUser.id || dbUser.phone || dbUser.email || dbUser.full_name)) {
-                    return true;
-                }
+            const u = window.DeliceDB?.auth?.getCurrentUserSync();
+            if (u && (u.id || u.email || u.phone)) return true;
+            const raw = localStorage.getItem('delice_user');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && (parsed.id || parsed.email || parsed.phone)) return true;
             }
-
-            // 2. Local storage delice_user check
-            const rawUser = localStorage.getItem('delice_user');
-            if (rawUser) {
-                const u = JSON.parse(rawUser);
-                if (u && (u.id || u.phone || u.email || u.full_name)) {
-                    return true;
-                }
-            }
-
-            // 3. Session authentication check
-            if (sessionStorage.getItem('delice_authenticated') === 'true') {
+            if (sessionStorage.getItem('delice_guest_checkout') === 'true') {
                 return true;
             }
         } catch (e) {}
         return false;
+    };
+
+    window.proceedWithGuestCheckout = function () {
+        try {
+            sessionStorage.setItem('delice_guest_checkout', 'true');
+        } catch (e) {}
+        window.closeLoginPromptModal();
+        window.openOrderModalForCart();
     };
 
     window.ensureAuthPromptModal = function () {
@@ -414,9 +411,9 @@
                     <button type="button" class="auth-prompt-close-btn" onclick="window.closeLoginPromptModal()" aria-label="Close modal">&times;</button>
                     <div class="auth-prompt-emblem">👑</div>
                     <span class="auth-prompt-tag">Connoisseur Club</span>
-                    <h3 class="auth-prompt-heading">Sign In to Place Your Order</h3>
+                    <h3 class="auth-prompt-heading">Sign In to Complete Your Order</h3>
                     <p class="auth-prompt-desc">
-                        Please sign in or create an account to order from Délice &amp; Co. Your celebration cake has been safely preserved in your bag!
+                        Please sign in with your email or create an account to order from Délice &amp; Co. Your celebration cake has been safely preserved in your basket!
                     </p>
                     <div id="authPromptCakePreview" class="auth-prompt-item-box" style="display:none;">
                         <img id="authPromptCakeImg" src="assets/cake_velvet.jpg" alt="Selected Cake" class="auth-prompt-thumb">
@@ -427,20 +424,20 @@
                         <span class="auth-prompt-saved-pill">✓ Saved in Bag</span>
                     </div>
                     <div class="auth-prompt-actions">
-                        <a id="authPromptLoginBtn" href="login.html?redirect=checkout&require_login=true" class="auth-prompt-btn-primary">
-                            <span>Sign In / Register to Order</span>
+                        <a id="authPromptLoginBtn" href="login.html?redirect=checkout" class="auth-prompt-btn-primary">
+                            <span>Sign In / Create Account to Order</span>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                         </a>
-                        <button type="button" class="auth-prompt-btn-secondary" onclick="window.closeLoginPromptModal()">
-                            Continue Browsing Cakes
+                        <button type="button" class="auth-prompt-btn-secondary" style="background:rgba(203,164,107,0.15); color:#855324; border:1px solid rgba(203,164,107,0.4); font-weight:700; padding:12px; margin-top:4px;" onclick="window.proceedWithGuestCheckout()">
+                            Continue as Guest &amp; Checkout ➔
                         </button>
                     </div>
-                    <div class="auth-prompt-perks">
-                        <span>✨ Instant OTP Login</span>
+                    <div class="auth-prompt-perks" style="margin-top:16px; font-size:12px; color:#64748B; display:flex; justify-content:center; gap:8px;">
+                        <span>✨ Direct Order Access</span>
                         <span>•</span>
-                        <span>🎂 10% Welcome Discount</span>
+                        <span>🎂 Fresh Artisan Bakes</span>
                         <span>•</span>
-                        <span>📍 Live Oven Tracking</span>
+                        <span>📍 Live Tracking</span>
                     </div>
                 </div>
             `;
@@ -477,7 +474,7 @@
         }
 
         if (loginBtn) {
-            loginBtn.href = 'login.html?redirect=checkout&require_login=true';
+            loginBtn.href = 'login.html?redirect=checkout';
         }
 
         modal.style.display = 'flex';
@@ -540,7 +537,11 @@
             name: name,
             weight: weight,
             callback: () => {
-                window.openOrderModalForCart();
+                if (!window.isUserLoggedIn()) {
+                    window.askLoginToOrder({ name, weight, price, img });
+                } else {
+                    window.openOrderModalForCart();
+                }
             }
         });
     };
@@ -589,7 +590,11 @@
             name: `Bespoke: ${flavour}`,
             weight: weight,
             callback: () => {
-                window.openOrderModalForCart();
+                if (!window.isUserLoggedIn()) {
+                    window.askLoginToOrder({ name: `Bespoke: ${flavour}`, weight, price: price, img });
+                } else {
+                    window.openOrderModalForCart();
+                }
             }
         });
     };
@@ -1057,6 +1062,10 @@
             window.showToast('Your basket is empty. Tap "+ Basket" or "Order Now ⚡" on any cake to order.');
             const cakesSec = $('cakes') || $('menuCatalogGrid') || $('bestsellers');
             if (cakesSec) cakesSec.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+        if (!window.isUserLoggedIn()) {
+            window.askLoginToOrder();
             return;
         }
         window.openOrderModalForCart();
@@ -2970,7 +2979,11 @@ Customer Support: +91 99094 44882 | orders@deliceandcake.in`;
         saveCart();
         window.showToast(`Selected ${currentQuickViewCake.name} (${quickViewSelectedWeight}) — Opening Checkout! 🎂`);
         window.closeQuickView();
-        window.openOrderModalForCart();
+        if (!window.isUserLoggedIn()) {
+            window.askLoginToOrder(currentQuickViewCake);
+        } else {
+            window.openOrderModalForCart();
+        }
     };
 
     window.buyQuickViewNow = function () {
@@ -3187,70 +3200,76 @@ Customer Support: +91 99094 44882 | orders@deliceandcake.in`;
             const authText = $('headerAuthText');
             const authLink = $('headerAuthLink');
             const mobLabel = $('mobBottomAuthLabel');
+            const logoutBtns = document.querySelectorAll('.header-logout-btn, #headerLogoutBtn, #mobLogoutLink');
 
             if (user && (user.id || user.phone || user.email || user.full_name)) {
                 const firstName = (user.full_name || 'Member').trim().split(' ')[0] || 'Member';
                 if (authText) authText.textContent = firstName;
                 if (authLink) {
-                    authLink.href = 'login.html?view=hub';
-                    authLink.title = `Connoisseur Club: ${user.full_name || 'Member'} — View Database Orders & Profile`;
+                    authLink.href = 'track.html';
+                    authLink.title = `Welcome, ${user.full_name || 'Member'} — Track Your Orders`;
                     authLink.classList.add('logged-in');
                 }
                 if (mobLabel) {
                     mobLabel.textContent = firstName;
                     const mobAuthAnchor = mobLabel.closest('a');
-                    if (mobAuthAnchor) mobAuthAnchor.href = 'login.html?view=hub';
+                    if (mobAuthAnchor) mobAuthAnchor.href = 'track.html';
                 }
-
-                // Add or sync Header Sign Out button
-                let signOutBtn = $('headerSignOutBtn');
-                if (!signOutBtn && authLink && authLink.parentNode) {
-                    signOutBtn = document.createElement('a');
-                    signOutBtn.id = 'headerSignOutBtn';
-                    signOutBtn.href = '#';
-                    signOutBtn.className = 'track-link signout-link';
-                    signOutBtn.title = 'Sign Out of Délice & Co.';
-                    signOutBtn.innerHTML = `
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                        <span>Sign Out</span>
-                    `;
-                    signOutBtn.onclick = async function(e) {
-                        e.preventDefault();
-                        if (confirm('Are you sure you want to sign out from Délice & Co.?')) {
-                            if (window.DeliceDB && window.DeliceDB.auth) {
-                                await window.DeliceDB.auth.signOut();
-                            } else {
-                                localStorage.removeItem('delice_user');
-                                localStorage.removeItem('delice_user_phone');
-                                localStorage.removeItem('delice_user_email');
-                                localStorage.removeItem('delice_user_name');
-                                localStorage.removeItem('delice_authenticated');
-                                sessionStorage.removeItem('delice_authenticated');
-                                sessionStorage.removeItem('delice_guest_browse');
-                            }
-                            window.location.replace('login.html');
-                        }
-                    };
-                    authLink.parentNode.insertBefore(signOutBtn, authLink.nextSibling);
-                }
+                logoutBtns.forEach(btn => {
+                    btn.style.display = 'inline-flex';
+                });
             } else {
                 if (authText) authText.textContent = 'Sign In';
                 if (authLink) {
                     authLink.href = 'login.html';
-                    authLink.title = 'Connoisseur Club Sign In & Orders';
+                    authLink.title = 'Connoisseur Club Sign In / Register';
                     authLink.classList.remove('logged-in');
                 }
-                if (mobLabel) mobLabel.textContent = 'Account';
-                const signOutBtn = $('headerSignOutBtn');
-                if (signOutBtn) signOutBtn.remove();
+                if (mobLabel) {
+                    mobLabel.textContent = 'Sign In';
+                    const mobAuthAnchor = mobLabel.closest('a');
+                    if (mobAuthAnchor) mobAuthAnchor.href = 'login.html';
+                }
+                logoutBtns.forEach(btn => {
+                    btn.style.display = 'none';
+                });
             }
         } catch (e) {}
     }
     window.syncAuthStateUI = syncAuthStateUI;
+
+    window.logoutUser = async function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        try {
+            if (window.DeliceDB && window.DeliceDB.auth && typeof window.DeliceDB.auth.signOut === 'function') {
+                await window.DeliceDB.auth.signOut();
+            }
+        } catch (err) {}
+
+        try {
+            localStorage.removeItem('delice_user');
+            localStorage.removeItem('delice_user_phone');
+            localStorage.removeItem('delice_user_email');
+            localStorage.removeItem('delice_user_name');
+            localStorage.removeItem('delice_authenticated');
+            localStorage.removeItem('delice_supabase_auth_token');
+            sessionStorage.removeItem('delice_authenticated');
+            sessionStorage.removeItem('delice_guest_checkout');
+        } catch (e) {}
+
+        if (typeof window.syncAuthStateUI === 'function') {
+            window.syncAuthStateUI();
+        }
+
+        if (typeof window.showToast === 'function') {
+            window.showToast('You have been safely signed out. Have a sweet day! 🎂');
+        }
+
+        if (window.location.pathname.includes('login.html')) {
+            window.location.href = 'login.html';
+        }
+    };
+    window.signOutUser = window.logoutUser;
 
     /* =====================================================================
        INITIALIZATION

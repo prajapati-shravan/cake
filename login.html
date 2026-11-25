@@ -1,1197 +1,947 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <meta content="web_blank" name="shell-type">
-  <title>Connoisseur Club Login | Délice &amp; Co. Artisan Patisserie</title>
-  <!-- PWA & Mobile Web App Meta -->
-  <meta name="theme-color" content="#1B3358">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Délice &amp; Co.">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connoisseur Club Login &amp; Account | Délice &amp; Co.</title>
   <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="manifest" href="manifest.json">
-  <!-- DÉLICE & CO. AUTO-JUMP: LOGGED-IN USERS AUTOMATICALLY ENTER WEBSITE -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
-    (function() {
+    // Seamless redirect for already authenticated members when redirecting (unless logging out)
+    (function checkExistingSession() {
       try {
-        var search = window.location.search || '';
-        var hash = window.location.hash || '';
-        var isOAuth = search.includes('code=') || search.includes('oauth=') || hash.includes('access_token=') || search.includes('error=');
-        if (isOAuth) {
-          return; // Do not auto-jump when processing OAuth callback
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('logout') === '1') {
+          localStorage.removeItem('delice_user');
+          localStorage.removeItem('delice_user_email');
+          localStorage.removeItem('delice_user_phone');
+          localStorage.removeItem('delice_user_name');
+          sessionStorage.removeItem('delice_authenticated');
+          sessionStorage.removeItem('delice_guest_checkout');
+          return;
         }
-        var rawUser = localStorage.getItem('delice_user');
-        var isAuth = false;
-        var role = 'customer';
-        if (rawUser) {
-          var u = JSON.parse(rawUser);
-          if (u && (u.id || u.phone || u.email || u.full_name)) {
-            isAuth = true;
-            role = u.role || 'customer';
-          }
-        }
-        if (!isAuth && (sessionStorage.getItem('delice_authenticated') === 'true' || localStorage.getItem('delice_authenticated') === 'true')) {
-          isAuth = true;
-        }
-        if (isAuth && !search.includes('view=hub')) {
-          var params = new URLSearchParams(search);
-          var redirect = params.get('redirect');
-          if (redirect) {
-            var dest = (redirect === 'checkout' || redirect === '#checkout') ? 'index.html?continue_checkout=1#checkout' : redirect;
-            window.location.replace(dest);
-          } else if (role === 'admin') {
-            window.location.replace('dashboard.html');
-          } else {
-            window.location.replace('index.html');
+        var raw = localStorage.getItem('delice_user');
+        if (raw) {
+          var u = JSON.parse(raw);
+          if (u && (u.id || u.email || u.phone)) {
+            var redirect = urlParams.get('redirect');
+            if (redirect) {
+              var dest = (redirect === 'checkout') ? 'index.html?continue_checkout=1#orderModal' : redirect;
+              window.location.replace(dest);
+            }
           }
         }
       } catch (e) {}
     })();
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-  
   <style>
-    @layer base {
-      html, body { margin: 0; padding: 0; }
-      body { overscroll-behavior: none; }
-      main > :first-child { margin-top: 0 !important; }
-      main > :last-child { margin-bottom: 0 !important; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #FAF7F2;
+      color: #1B3358;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
     }
-    ::-webkit-scrollbar { display: none; }
-    .fade-enter {
-      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .auth-container {
+      width: 100%;
+      max-width: 440px;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+    .brand-header {
+      text-align: center;
+      margin-bottom: 24px;
     }
-    .spinner {
-      border: 2px solid rgba(255, 255, 255, 0.3);
+    .brand-emblem {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 0.8s linear infinite;
+      background: linear-gradient(135deg, #1B3358 0%, #2A4365 100%);
+      border: 2px solid #CBA46B;
+      color: #FFF;
+      font-size: 28px;
+      box-shadow: 0 8px 24px rgba(27, 51, 88, 0.15);
+      margin-bottom: 12px;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .brand-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #1B3358;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .brand-subtitle {
+      font-size: 13px;
+      color: #64748B;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .auth-card {
+      background: #FFFFFF;
+      border: 1.5px solid rgba(203, 164, 107, 0.4);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 12px 36px rgba(27, 51, 88, 0.08);
+    }
+    .auth-tabs {
+      display: flex;
+      border-bottom: 2px solid #F1F5F9;
+      margin-bottom: 22px;
+      gap: 8px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 12px 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #94A3B8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .auth-tab.active {
+      color: #1B3358;
+      border-bottom-color: #CBA46B;
+      font-weight: 700;
+    }
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .form-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #1B3358;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .btn-text-toggle {
+      background: none;
+      border: none;
+      color: #CBA46B;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+    }
+    .btn-text-toggle:hover {
+      text-decoration: underline;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1B3358;
+      background: #FAF7F2;
+      transition: all 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #1B3358;
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(27, 51, 88, 0.08);
+    }
+    .alert-box {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.4;
+      text-align: left;
+    }
+    .alert-error {
+      background: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      color: #991B1B;
+    }
+    .alert-success {
+      background: #DCFCE7;
+      border: 1px solid #86EFAC;
+      color: #166534;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: #1B3358;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(27, 51, 88, 0.2);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover {
+      background: #0F1E36;
+      box-shadow: 0 6px 20px rgba(27, 51, 88, 0.28);
+    }
+    .btn-submit:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 16px;
+      background: #FFFFFF;
+      color: #1F2937;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+    .btn-google:hover {
+      background: #F8FAFC;
+      border-color: #94A3B8;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    .oauth-divider {
+      display: flex;
+      align-items: center;
+      margin: 18px 0 14px;
+      color: #94A3B8;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .oauth-divider::before, .oauth-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .oauth-divider span {
+      padding: 0 10px;
+    }
+    .switch-prompt {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #64748B;
+      text-align: center;
+    }
+    .switch-link {
+      color: #855324;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    .switch-link:hover {
+      text-decoration: underline;
+    }
+    .guest-section {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #E2E8F0;
+      text-align: center;
+    }
+    .guest-text {
+      font-size: 12.5px;
+      color: #64748B;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .btn-guest {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 11px 20px;
+      background: rgba(203, 164, 107, 0.12);
+      color: #855324;
+      border: 1px solid rgba(203, 164, 107, 0.35);
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-guest:hover {
+      background: rgba(203, 164, 107, 0.25);
+      color: #1B3358;
+    }
+    .checkout-notice {
+      display: none;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E40AF;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.4;
+      text-align: left;
     }
   </style>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "error-container": "#ffdad6",
-            "on-tertiary-fixed-variant": "#005236",
-            "surface-variant": "#e8e2d7",
-            "text-main": "#1C2B46",
-            "inverse-primary": "#b8c7e9",
-            "on-error-container": "#93000a",
-            "navy-deep": "#142035",
-            "secondary-fixed": "#ffdcc1",
-            "berry-rose": "#E06D75",
-            "gold-hover": "#C58B55",
-            "tertiary-fixed-dim": "#4edea3",
-            "secondary-container": "#febc83",
-            "on-secondary": "#ffffff",
-            "secondary": "#855324",
-            "tertiary-fixed": "#6ffbbe",
-            "on-surface-variant": "#44474d",
-            "primary-container": "#1c2b46",
-            "surface": "#fff9ed",
-            "surface-container-high": "#ede7dd",
-            "tertiary": "#001b0f",
-            "background": "#fff9ed",
-            "on-primary-container": "#8492b3",
-            "border-delicate": "#DFD6C8",
-            "surface-container-low": "#f9f3e8",
-            "surface-container": "#f3ede2",
-            "linen-card": "#FFFFFF",
-            "secondary-fixed-dim": "#fbb980",
-            "error": "#ba1a1a",
-            "veg-badge-bg": "#ECFDF5",
-            "on-primary-fixed-variant": "#384763",
-            "text-muted": "#686D76",
-            "on-secondary-container": "#79491a",
-            "on-primary-fixed": "#0b1b36",
-            "surface-bright": "#fff9ed",
-            "on-tertiary-container": "#00a673",
-            "on-tertiary-fixed": "#002113",
-            "tertiary-container": "#003220",
-            "primary-fixed": "#d7e2ff",
-            "on-surface": "#1d1b15",
-            "outline-variant": "#c5c6ce",
-            "inverse-surface": "#333029",
-            "on-primary": "#ffffff",
-            "veg-badge-text": "#065F46",
-            "surface-dim": "#dfd9cf",
-            "primary-fixed-dim": "#b8c7e9",
-            "on-secondary-fixed-variant": "#693c0e",
-            "surface-container-lowest": "#ffffff",
-            "on-tertiary": "#ffffff",
-            "cream-surface": "#FAF7F2",
-            "surface-tint": "#505e7c",
-            "primary": "#061630",
-            "inverse-on-surface": "#f6f0e5",
-            "on-error": "#ffffff",
-            "outline": "#75777e",
-            "on-secondary-fixed": "#2e1500",
-            "on-background": "#1d1b15",
-            "surface-container-highest": "#e8e2d7"
-          },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "full": "9999px"
-          },
-          fontFamily: {
-            "label-md": ["Plus Jakarta Sans"],
-            "body-md": ["Plus Jakarta Sans"],
-            "title-md": ["Plus Jakarta Sans"],
-            "headline-sm": ["Playfair Display"],
-            "body-lg": ["Plus Jakarta Sans"],
-            "headline-lg-mobile": ["Playfair Display"],
-            "price-lg": ["Plus Jakarta Sans"],
-            "display": ["Playfair Display"],
-            "headline-lg": ["Playfair Display"],
-            "body-sm": ["Plus Jakarta Sans"],
-            "label-sm": ["Plus Jakarta Sans"],
-            "display-mobile": ["Playfair Display"],
-            "headline-md": ["Playfair Display"]
-          }
-        }
-      }
-    };
-  </script>
 </head>
-<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col justify-between selection:bg-secondary/20 selection:text-text-main">
-
-  <!-- TOP HEADER -->
-  <header class="w-full border-b border-border-delicate/60 bg-surface/90 backdrop-blur-sm sticky top-0 z-40 py-4 px-6 sm:px-12 flex items-center justify-between transition-all">
-    <a class="flex items-center gap-1.5 font-label-sm text-[11px] text-text-muted hover:text-text-main transition-colors uppercase tracking-widest group" href="index.html" onclick="enterAsGuest(event, this.href)">
-      <span class="material-symbols-outlined text-[16px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
-      <span>Back to Patisserie</span>
-    </a>
-
-    <div class="flex flex-col items-center text-center">
-      <a href="index.html" class="flex flex-col items-center group" onclick="enterAsGuest(event, this.href)">
-        <span class="font-headline-sm text-xl sm:text-2xl tracking-tight text-text-main font-serif group-hover:text-secondary transition-colors">DÉLICE &amp; CO.</span>
-        <span class="font-label-sm text-[9px] tracking-[0.25em] text-secondary uppercase font-semibold">Artisan Patisserie • Vadodara</span>
-      </a>
+<body>
+  <div class="auth-container">
+    <div class="brand-header">
+      <div class="brand-emblem">🎂</div>
+      <h1 class="brand-title">DÉLICE &amp; CO.</h1>
+      <p class="brand-subtitle">Artisan Patisserie &amp; Connoisseur Club</p>
     </div>
 
-    <div class="flex items-center gap-2">
-      <span class="w-2.5 h-2.5 rounded-full bg-veg-badge-text shadow-sm animate-pulse"></span>
-      <span class="font-label-sm text-[11px] text-text-muted hidden sm:inline tracking-wider font-semibold">100% PURE VEG</span>
-    </div>
-  </header>
+    <div class="auth-card">
+      <!-- Notice shown when redirected from checkout -->
+      <div id="checkoutNotice" class="checkout-notice">
+        🛍️ <strong>Checkout In Progress:</strong> Please sign in or create an account to complete your order. Your selected cakes are safely reserved in your basket!
+      </div>
 
-  <!-- MAIN AUTHENTICATION CONTAINER -->
-  <main class="flex-1 w-full flex items-center justify-center px-4 py-8 sm:py-12">
-    <div class="w-full max-w-md mx-auto fade-enter">
-
-      <!-- ========================================== -->
-      <!-- VIEW 1: AUTHENTICATION FORM (SIGN IN / UP) -->
-      <!-- ========================================== -->
-      <div id="auth-box" class="bg-linen-card rounded-xl border border-border-delicate/80 p-7 sm:p-9 shadow-sm flex flex-col transition-all">
-        
-        <!-- Mandatory Order Notice (Shown when redirected from "+ Order" / checkout attempt) -->
-        <div id="order-auth-notice" class="hidden mb-5 p-3.5 rounded-lg bg-amber-50 border border-amber-300/80 text-amber-950 text-xs items-center gap-3 fade-enter shadow-xs">
-          <span class="text-2xl flex-shrink-0">🎂</span>
-          <div class="text-left flex-1">
-            <strong class="font-bold text-amber-950 block text-[13px]">Please Sign In to Complete Your Order</strong>
-            <span class="text-amber-800">Your selected celebration cake is safely preserved in your bag! Please sign in or register to place your order with live delivery updates.</span>
-          </div>
-        </div>
-
-        <!-- Tab Mode Switcher -->
-        <div class="flex items-center bg-surface-container-low p-1 rounded-lg mb-6 border border-border-delicate/50">
-          <button id="tab-login" type="button" onclick="switchAuthMode('login')" class="flex-1 py-2 px-3 rounded-md font-label-md text-xs sm:text-sm text-surface bg-text-main font-semibold shadow-xs text-center transition-all">
-            Sign In
-          </button>
-          <button id="tab-register" type="button" onclick="switchAuthMode('register')" class="flex-1 py-2 px-3 rounded-md font-label-md text-xs sm:text-sm text-text-muted hover:text-text-main font-semibold text-center transition-all">
-            Create Account
+      <!-- Signed In State Card -->
+      <div id="alreadyLoggedInCard" style="display:none; text-align:center; padding:12px 0;">
+        <div style="font-size:42px; margin-bottom:12px;">👑</div>
+        <h2 style="font-family:'Playfair Display', Georgia, serif; font-size:22px; font-weight:700; color:#1B3358; margin-bottom:6px;">Welcome Back!</h2>
+        <p id="loggedInUserInfo" style="font-size:14px; color:#64748B; margin-bottom:20px; line-height:1.5;">
+          You are currently signed into your Connoisseur account.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <a id="btnContinueStore" href="index.html" class="btn-submit" style="text-decoration:none;">
+            <span>Continue to Boutique</span>
+            <span>➔</span>
+          </a>
+          <button type="button" class="btn-guest" onclick="handleLogoutSubmit()" style="cursor:pointer; color:#991B1B; border-color:#FCA5A5; background:#FEE2E2;">
+            <span>Log Out from this Account</span>
+            <span>🚪</span>
           </button>
         </div>
+      </div>
 
-        <!-- Header Content -->
-        <div class="text-center mb-6">
-          <span class="font-label-sm text-xs text-secondary tracking-[0.2em] uppercase font-bold inline-block mb-1">
-            ✨ Connoisseur Club
-          </span>
-          <h1 id="auth-title" class="font-headline-md text-2xl sm:text-3xl text-text-main font-serif mb-1.5">
-            Welcome Back
-          </h1>
-          <p id="auth-subtitle" class="font-body-sm text-xs sm:text-sm text-text-muted">
-            Enter your phone or email to access your celebration orders
-          </p>
-        </div>
+      <!-- Navigation Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')" role="tab" aria-selected="true">
+          Sign In
+        </button>
+        <button type="button" class="auth-tab" id="tabCreate" onclick="switchAuthTab('create')" role="tab" aria-selected="false">
+          Create Account
+        </button>
+      </div>
 
-        <!-- The Authentication Form -->
-        <form class="flex flex-col gap-4" id="auth-form" onsubmit="handleAuthSubmit(event)">
-          
-          <!-- Full Name Field (Create Account Only) -->
-          <div id="field-name" class="hidden flex-col gap-1.5 fade-enter">
-            <label class="font-label-sm text-[11px] uppercase tracking-wider text-text-main font-semibold" for="name-input">
-              Full Name <span class="text-berry-rose">*</span>
-            </label>
-            <input 
-              class="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-border-delicate/70 text-text-main text-sm focus:outline-none focus:border-secondary focus:bg-surface transition-all placeholder:text-text-muted/60" 
-              id="name-input" 
-              placeholder="e.g. Pooja Shah" 
-              type="text"
-            >
+      <!-- Panel 1: Sign In Form -->
+      <div id="panelSignIn">
+        <div id="signinAlert" class="alert-box alert-error" role="alert"></div>
+
+        <form id="formSignIn" onsubmit="handleSignInSubmit(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="signinEmail">Email or Mobile Number</label>
+            <input type="text" id="signinEmail" class="form-input" placeholder="e.g. yourname@gmail.com" required autocomplete="username">
           </div>
 
-          <!-- Identifier (Phone or Email) -->
-          <div class="flex flex-col gap-1.5">
-            <label id="identifier-label" class="font-label-sm text-[11px] uppercase tracking-wider text-text-main font-semibold" for="auth-identifier">
-              Mobile or Email <span class="text-berry-rose">*</span>
-            </label>
-            <div class="relative">
-              <input 
-                class="w-full pl-3.5 pr-10 py-2.5 rounded-lg bg-surface-container-low border border-border-delicate/70 text-text-main text-sm focus:outline-none focus:border-secondary focus:bg-surface transition-all placeholder:text-text-muted/60" 
-                id="auth-identifier" 
-                placeholder="+91 99094 44882 or name@domain.com" 
-                required 
-                type="text"
-              >
-              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">
-                badge
-              </span>
+          <div class="form-group">
+            <div class="label-row">
+              <label class="form-label" for="signinPassword">Password</label>
+              <button type="button" class="btn-text-toggle" onclick="togglePasswordVisibility('signinPassword', this)">Show</button>
             </div>
+            <input type="password" id="signinPassword" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
           </div>
 
-          <!-- Password Field Container -->
-          <div id="credential-container" class="flex flex-col gap-1.5 fade-enter">
-            <div class="flex items-center justify-between">
-              <label class="font-label-sm text-[11px] uppercase tracking-wider text-text-main font-semibold" for="password-input">
-                Password <span class="text-berry-rose">*</span>
-              </label>
-              <a class="font-label-sm text-[11px] text-secondary hover:text-gold-hover transition-colors font-medium" href="javascript:void(0)" onclick="forgotPasswordAlert()">
-                Forgot?
-              </a>
-            </div>
-            <div class="relative">
-              <input 
-                class="w-full pl-3.5 pr-11 py-2.5 rounded-lg bg-surface-container-low border border-border-delicate/70 text-text-main text-sm focus:outline-none focus:border-secondary focus:bg-surface transition-all placeholder:text-text-muted/60" 
-                id="password-input" 
-                placeholder="••••••••••••" 
-                type="password"
-              >
-              <button class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1 transition-colors" onclick="togglePasswordVisibility()" type="button" aria-label="Toggle password visibility">
-                <span class="material-symbols-outlined text-lg" id="password-toggle-icon">visibility</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- OTP Input Container (Hidden by default, shown in OTP mode) -->
-          <div id="otp-container" class="hidden flex-col gap-2 fade-enter">
-            <div class="flex items-center justify-between">
-              <label class="font-label-sm text-[11px] uppercase tracking-wider text-text-main font-semibold" for="otp-input">
-                6-Digit Verification Code <span class="text-berry-rose">*</span>
-              </label>
-              <button id="resend-btn" type="button" onclick="sendOtpCode()" class="font-label-sm text-[11px] text-secondary hover:underline font-semibold">
-                Send OTP
-              </button>
-            </div>
-            <input 
-              class="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-low border border-border-delicate/70 text-text-main text-center text-lg tracking-[0.3em] font-bold focus:outline-none focus:border-secondary focus:bg-surface transition-all placeholder:tracking-normal placeholder:font-normal placeholder:text-xs" 
-              id="otp-input" 
-              maxlength="6" 
-              placeholder="Enter 6-digit code (e.g. 123456)" 
-              type="text"
-            >
-            <p id="otp-note" class="text-[11px] text-text-muted text-center">
-              We send the OTP to your WhatsApp and registered mobile number.
-            </p>
-          </div>
-
-          <!-- Options Row (Keep Signed In & OTP toggle) -->
-          <div class="flex items-center justify-between text-xs pt-1">
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <input checked id="keep-signed-in" class="w-3.5 h-3.5 rounded text-secondary focus:ring-0 cursor-pointer accent-secondary" type="checkbox">
-              <span class="text-text-muted font-normal">Keep me signed in</span>
-            </label>
-            <button class="text-secondary hover:underline font-label-sm text-[11px] transition-all font-semibold" onclick="toggleOtpView()" type="button">
-              <span id="login-method-text">Sign in via OTP</span>
-            </button>
-          </div>
-
-          <!-- Action Submit Button -->
-          <button 
-            id="submit-auth-btn" 
-            class="w-full mt-2 py-3 px-6 rounded-lg bg-text-main hover:bg-navy-deep active:scale-[0.99] text-surface font-title-md text-sm sm:text-base tracking-wide shadow-sm hover:shadow transition-all text-center flex items-center justify-center gap-2 font-bold cursor-pointer" 
-            type="submit"
-          >
-            <div id="btn-spinner" class="spinner w-4 h-4 hidden"></div>
-            <span id="btn-text">Sign In</span>
+          <button type="submit" id="btnSignInSubmit" class="btn-submit">
+            <span>Sign In to Account</span>
+            <span>➔</span>
           </button>
-
-          <!-- Status Banners -->
-          <!-- Success Banner -->
-          <div class="hidden p-3 rounded-lg bg-veg-badge-bg text-veg-badge-text font-body-sm text-xs items-center gap-2 justify-center border border-veg-badge-text/20 fade-enter" id="auth-status-banner">
-            <span class="material-symbols-outlined text-base">check_circle</span>
-            <span id="auth-status-text">Welcome back! Redirecting to orders...</span>
-          </div>
-
-          <!-- Error Banner -->
-          <div class="hidden p-3 rounded-lg bg-error-container text-on-error-container font-body-sm text-xs items-center gap-2 justify-center border border-error/20 fade-enter" id="auth-error-banner">
-            <span class="material-symbols-outlined text-base">error</span>
-            <span id="auth-error-text">Authentication failed. Please check details.</span>
-          </div>
-
         </form>
 
-        <!-- Divider -->
-        <div class="relative my-5 flex items-center justify-center">
-          <div class="w-full h-px bg-border-delicate/60"></div>
-          <span class="absolute bg-linen-card px-3 font-label-sm text-[10px] tracking-widest text-text-muted uppercase">Or Connect With</span>
+        <div class="switch-prompt">
+          <span>Don't have an account yet?</span>
+          <a class="switch-link" onclick="switchAuthTab('create')">Create Account</a>
         </div>
-
-        <!-- Social Buttons -->
-        <div class="grid grid-cols-2 gap-3">
-          <button class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-border-delicate/80 hover:bg-surface-container-low text-text-main font-label-sm text-xs transition-all cursor-pointer" onclick="triggerThirdPartyLogin('Google')" type="button" title="Sign in with official Google Account">
-            <svg class="w-4 h-4" viewBox="0 0 24 24">
-              <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z" fill="#4285F4"></path>
-              <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.15C3.25 21.36 7.35 24 12 24z" fill="#34A853"></path>
-              <path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.27C.46 8.2.01 10.04.01 12c0 1.96.45 3.8 1.26 5.42l4.01-3.15z" fill="#FBBC05"></path>
-              <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.64 1.27 6.58l4.01 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
-            </svg>
-            <span class="font-semibold">Google</span>
-          </button>
-          
-          <button class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-border-delicate/80 hover:bg-surface-container-low text-text-main font-label-sm text-xs transition-all cursor-pointer" onclick="triggerThirdPartyLogin('WhatsApp')" type="button" title="Verify via WhatsApp">
-            <svg class="w-4 h-4 fill-[#25D366]" viewBox="0 0 24 24">
-              <path d="M12.031 2C6.511 2 2 6.512 2 12.031c0 1.96.564 3.791 1.542 5.342L2.094 22l4.781-1.423a10.016 10.016 0 0 0 5.156 1.454c5.52 0 10.031-4.512 10.031-10.031S17.551 2 12.031 2zm5.734 14.172c-.242.678-1.393 1.297-1.922 1.344-.508.047-1.168.078-3.75-1.008-3.3-1.383-5.414-4.75-5.586-4.977-.164-.226-1.344-1.789-1.344-3.414 0-1.625.852-2.422 1.156-2.75.305-.328.664-.406.883-.406.219 0 .438.008.625.016.203.008.477-.078.742.563.273.664.93 2.273 1.016 2.445.086.172.141.375.031.602-.109.227-.164.367-.328.562-.164.195-.344.437-.492.586-.164.164-.336.344-.145.672.191.328.848 1.402 1.82 2.27 1.25 1.117 2.305 1.465 2.633 1.633.328.164.516.141.711-.086.195-.227.836-.977 1.059-1.312.227-.336.453-.281.766-.164.312.117 1.977.93 2.313 1.098.336.164.563.242.648.383.086.141.086.812-.156 1.492z"></path>
-            </svg>
-            <span class="font-semibold">WhatsApp</span>
-          </button>
-        </div>
-
-        <!-- Footer Switcher Link -->
-        <div class="mt-6 pt-4 border-t border-border-delicate/50 text-center flex flex-col gap-2">
-          <p id="auth-switch-text" class="font-body-sm text-xs text-text-muted">
-            First time here? 
-            <a class="text-secondary hover:text-gold-hover font-semibold transition-colors cursor-pointer" onclick="switchAuthMode('register')">
-              Create an Account
-            </a>
-          </p>
-          <div>
-            <a href="index.html" onclick="enterAsGuest(event, this.href)" class="inline-flex items-center gap-1 font-label-sm text-[12px] text-text-muted hover:text-text-main font-semibold transition-colors py-1.5 px-3 rounded hover:bg-surface-container-low">
-              <span>Continue as Guest &amp; Browse Menu</span>
-              <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-            </a>
-          </div>
-        </div>
-
       </div>
 
-      <!-- ============================================== -->
-      <!-- VIEW 2: LOGGED IN MEMBER HUB & DATABASE ORDERS -->
-      <!-- ============================================== -->
-      <div id="member-hub-box" class="hidden bg-linen-card rounded-xl border border-border-delicate/80 p-6 sm:p-8 shadow-sm flex flex-col gap-6 fade-enter">
-        
-        <!-- Member Profile Header -->
-        <div class="flex items-start justify-between border-b border-border-delicate/60 pb-5">
-          <div class="flex items-center gap-3.5">
-            <div class="w-12 h-12 rounded-full bg-surface-container border border-secondary/40 flex items-center justify-center text-secondary text-xl font-serif font-bold" id="user-avatar-initials">
-              D&amp;C
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2">
-                <h2 id="hub-user-name" class="font-headline-sm text-lg sm:text-xl font-bold text-text-main font-serif">
-                  Connoisseur Member
-                </h2>
-                <span id="hub-role-badge" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
-                  Member
-                </span>
-              </div>
-              <span id="hub-user-contact" class="text-xs text-text-muted">
-                Verified Account
-              </span>
-            </div>
+      <!-- Panel 2: Create Account Form -->
+      <div id="panelCreate" style="display:none;">
+        <div id="createAlert" class="alert-box" role="alert"></div>
+
+        <form id="formCreate" onsubmit="handleCreateAccountSubmit(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="createName">Full Name</label>
+            <input type="text" id="createName" class="form-input" placeholder="e.g. Priya Sharma" required autocomplete="name">
           </div>
-          <button onclick="handleSignOut()" class="py-1.5 px-3 rounded-lg border border-border-delicate hover:bg-surface-container-low text-xs text-berry-rose font-semibold transition-colors flex items-center gap-1" title="Sign out">
-            <span class="material-symbols-outlined text-[16px]">logout</span>
-            <span>Exit</span>
+
+          <div class="form-group">
+            <label class="form-label" for="createEmail">Email Address</label>
+            <input type="email" id="createEmail" class="form-input" placeholder="e.g. priya@gmail.com" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="createPhone">Mobile Number (Optional, for SMS/Delivery updates)</label>
+            <input type="tel" id="createPhone" class="form-input" placeholder="e.g. 9876543210" pattern="[0-9]{10}" autocomplete="tel">
+          </div>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label class="form-label" for="createPassword">Password (Min. 6 Characters)</label>
+              <button type="button" class="btn-text-toggle" onclick="togglePasswordVisibility('createPassword', this)">Show</button>
+            </div>
+            <input type="password" id="createPassword" class="form-input" placeholder="Choose a secure password" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <button type="submit" id="btnCreateSubmit" class="btn-submit">
+            <span>Create Account &amp; Continue</span>
+            <span>➔</span>
           </button>
+        </form>
+
+        <div class="switch-prompt">
+          <span>Already have an account?</span>
+          <a class="switch-link" onclick="switchAuthTab('signin')">Sign In</a>
         </div>
+      </div>
 
-        <!-- Connoisseur Privileges Banner -->
-        <div class="p-3.5 rounded-lg bg-surface border border-secondary/20 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <span class="text-xl">👑</span>
-            <div class="flex flex-col">
-              <span class="font-label-sm text-xs font-bold text-text-main">Connoisseur Club Privileges Active</span>
-              <span class="text-[11px] text-text-muted">Complimentary cake tasting notes &amp; express 2-hour priority baking.</span>
-            </div>
-          </div>
-          <a href="index.html#cakes" class="text-xs text-secondary hover:underline font-bold whitespace-nowrap">
-            Order Cake ➔
-          </a>
+      <!-- Google Quick Auth Option (Down Below Forms) -->
+      <div id="googleAuthSection" style="margin-top:20px;">
+        <div class="oauth-divider">
+          <span>or continue with</span>
         </div>
+        <button type="button" class="btn-google" onclick="signInWithGoogle()" id="btnGoogleAuth" title="Sign in with official Google Account">
+          <svg width="18" height="18" viewBox="0 0 18 18">
+            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+            <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+      </div>
 
-        <!-- Real Database Orders Section -->
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-text-main text-lg">local_mall</span>
-              <h3 class="font-label-sm text-xs uppercase tracking-wider text-text-main font-bold">
-                Your Orders in Database
-              </h3>
-            </div>
-            <span id="orders-count-badge" class="font-label-sm text-[11px] bg-surface-container-high px-2 py-0.5 rounded text-text-muted font-bold">
-              Loading...
-            </span>
-          </div>
-
-          <!-- Dynamic Orders Container -->
-          <div id="orders-list-container" class="flex flex-col gap-2.5 max-h-[300px] overflow-y-auto pr-1">
-            <div class="p-4 rounded-lg bg-surface-container-low border border-border-delicate/60 text-center text-xs text-text-muted">
-              Loading your past orders from Supabase database...
-            </div>
-          </div>
-        </div>
-
-        <!-- Primary Jump to Website Button -->
-        <a href="index.html" onclick="enterAsGuest(event, this.href)" class="w-full py-3 px-4 rounded-lg bg-text-main hover:bg-secondary text-surface font-label-md text-xs font-bold text-center transition-all flex items-center justify-center gap-2 shadow-sm">
-          <span>Enter Délice &amp; Co. Boutique</span>
-          <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+      <!-- Guest Continue Option -->
+      <div class="guest-section">
+        <p class="guest-text">
+          Want to explore first? You can browse our celebration cakes freely without signing in.
+        </p>
+        <a href="index.html" class="btn-guest" onclick="enterAsGuest(event)">
+          <span>Continue Browsing as Guest</span>
+          <span>➔</span>
         </a>
-
-        <!-- Fast Navigation Links -->
-        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-border-delicate/60 text-center">
-          <a href="menu.html" onclick="enterAsGuest(event, this.href)" class="py-2.5 px-2 rounded-lg bg-surface-container-low hover:bg-surface text-text-main border border-border-delicate/70 font-label-sm text-[11px] font-bold transition-all">
-            🎂 Full Menu
-          </a>
-          <a href="custom.html" onclick="enterAsGuest(event, this.href)" class="py-2.5 px-2 rounded-lg bg-surface-container-low hover:bg-surface text-text-main border border-border-delicate/70 font-label-sm text-[11px] font-bold transition-all">
-            🎨 Custom Studio
-          </a>
-        </div>
-
-        <!-- Admin Portal Gateway (If role is Admin/Staff) -->
-        <div id="admin-gateway-banner" class="hidden p-3 rounded-lg bg-text-main text-surface flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-base">⚡</span>
-            <span class="text-xs font-semibold">Staff &amp; Admin Dashboard Access</span>
-          </div>
-          <a href="dashboard.html" class="px-3 py-1 rounded bg-secondary text-surface text-xs font-bold hover:bg-gold-hover transition-colors">
-            Open Hub ➔
-          </a>
-        </div>
-
       </div>
-
-      <!-- Trust Badges Underneath -->
-      <div class="mt-8 text-center flex flex-col items-center gap-1.5 text-text-muted font-body-sm text-[12px]">
-        <div class="flex items-center gap-2 font-label-sm text-[11px] text-text-muted tracking-wide">
-          <span>Pure European Butter</span>
-          <span>•</span>
-          <span>Valrhona Chocolate</span>
-          <span>•</span>
-          <span>Eggless</span>
-        </div>
-        <p class="opacity-75 text-[11px]">Boutique Kitchen &amp; Studio — Shrenik Park, Akota, Vadodara</p>
-      </div>
-
     </div>
-  </main>
+  </div>
 
-
-
-  <!-- FOOTER COPYRIGHT -->
-  <footer class="w-full py-4 text-center text-text-muted/70 text-[11px] border-t border-border-delicate/40 bg-surface">
-    © 2026 Délice &amp; Co. Artisan Patisserie. Handcrafted in Vadodara, Gujarat.
-  </footer>
-
-  <!-- SUPABASE SDK & CLIENT -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase Client Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="supabase.js"></script>
 
-  <!-- PAGE LOGIC SCRIPT -->
   <script>
-    let currentAuthMode = 'login'; // 'login' | 'register'
-    let isOtpMode = false;
-
-    // Listen immediately for Supabase auth state changes (OAuth popup/redirect)
-    if (window.DeliceDB && typeof window.DeliceDB.getClient === 'function') {
-      try {
-        const client = window.DeliceDB.getClient();
-        if (client && client.auth) {
-          client.auth.onAuthStateChange((event, session) => {
-            if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-              handleOAuthSuccess(session.user);
-            }
-          });
-        }
-      } catch (e) {
-        console.warn('OAuth listener initialization:', e);
+    // Check if user came from checkout or is already signed in
+    (function initView() {
+      var params = new URLSearchParams(window.location.search);
+      var redirect = params.get('redirect');
+      if (redirect === 'checkout' || redirect === '#checkout') {
+        var notice = document.getElementById('checkoutNotice');
+        if (notice) notice.style.display = 'block';
       }
-    }
-
-    // Check if user is already logged in on page load
-    document.addEventListener('DOMContentLoaded', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('mode') === 'register') {
-        switchAuthMode('register');
-      }
-      if (urlParams.get('identifier')) {
-        document.getElementById('auth-identifier').value = urlParams.get('identifier');
+      var view = params.get('view');
+      if (view === 'create' || view === 'register' || view === 'signup') {
+        switchAuthTab('create');
       }
 
-      // Check if this page is an OAuth return (hash or search params from Google)
-      const hash = window.location.hash || '';
-      const search = window.location.search || '';
-      const urlParams = new URLSearchParams(search);
-      const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
-      
-      const errorParam = urlParams.get('error') || hashParams.get('error');
-      const errorDesc = urlParams.get('error_description') || hashParams.get('error_description');
-      const code = urlParams.get('code');
-      const accessToken = hashParams.get('access_token');
-      const isOAuthReturn = Boolean(accessToken || code || search.includes('oauth=') || errorParam);
+      // Check for Google OAuth callback return
+      var hash = window.location.hash || '';
+      var search = window.location.search || '';
+      var isOAuthReturn = hash.includes('access_token') || search.includes('code=') || hash.includes('error=');
 
-      if (errorParam || errorDesc) {
-        showError('Google Sign-In notice: ' + (errorDesc || errorParam || 'Authentication was cancelled or failed.'));
-      } else if (isOAuthReturn) {
-        showSuccess('⚡ Verifying Google account with Délice & Co. database...');
-        try {
-          const client = window.DeliceDB?.getClient();
-          if (client) {
-            // 1. If PKCE code is present in query parameters, exchange it explicitly
-            if (code && typeof client.auth.exchangeCodeForSession === 'function') {
-              try {
-                const { data: exData, error: exErr } = await client.auth.exchangeCodeForSession(code);
-                if (!exErr && exData?.session?.user) {
-                  handleOAuthSuccess(exData.session.user);
-                  return;
-                } else if (exErr) {
-                  console.warn('PKCE exchange error:', exErr);
-                }
-              } catch (codeErr) {
-                console.warn('Code exchange exception:', codeErr);
-              }
-            }
-
-            // 2. Setup auth state listener
-            if (typeof client.auth.onAuthStateChange === 'function') {
-              client.auth.onAuthStateChange((event, session) => {
-                if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED')) {
-                  handleOAuthSuccess(session.user);
-                }
-              });
-            }
-
-            // 3. Fallback: Check existing session via getSession()
-            const checkSession = async () => {
-              const { data } = await client.auth.getSession();
-              if (data?.session?.user) {
-                handleOAuthSuccess(data.session.user);
-                return true;
-              }
-              return false;
-            };
-
-            const ok = await checkSession();
-            if (!ok) {
-              let attempts = 0;
-              const sessionInterval = setInterval(async () => {
-                attempts++;
-                const success = await checkSession();
-                if (success || attempts > 12) {
-                  clearInterval(sessionInterval);
-                  if (!success && !document.getElementById('auth-error-banner').classList.contains('flex')) {
-                    showError('Google session could not be completed. Please retry or sign in with your email & password.');
-                  }
-                }
-              }, 250);
-            }
-          }
-        } catch (e) {
-          console.warn('OAuth session check:', e);
-          showError('Google Sign-In check notice: ' + (e.message || 'Please retry.'));
-        }
-      }
-
-      // If user is already authenticated and NOT viewing account hub explicitly:
-      const existingUser = window.DeliceDB?.auth?.getCurrentUserSync();
-      if (!isOAuthReturn && existingUser && urlParams.get('view') !== 'hub') {
-        const redirect = urlParams.get('redirect') || 'index.html';
-        window.location.replace(redirect);
-        return;
-      }
-
-      await checkExistingSession();
-    });
-
-    async function checkExistingSession() {
-      try {
-        const user = (window.DeliceDB && window.DeliceDB.auth) 
-          ? (await window.DeliceDB.auth.getProfile() || window.DeliceDB.auth.getCurrentUserSync())
-          : null;
-
-        if (user) {
-          renderMemberHub(user);
-        }
-      } catch (e) {
-        console.warn('Session verification notice:', e);
-      }
-    }
-
-    // Switch between Sign In and Create Account
-    function switchAuthMode(mode) {
-      currentAuthMode = mode;
-      const tabLogin = document.getElementById('tab-login');
-      const tabRegister = document.getElementById('tab-register');
-      const nameField = document.getElementById('field-name');
-      const authTitle = document.getElementById('auth-title');
-      const authSubtitle = document.getElementById('auth-subtitle');
-      const btnText = document.getElementById('btn-text');
-      const switchText = document.getElementById('auth-switch-text');
-      const nameInput = document.getElementById('name-input');
-
-      // Clear alert banners
-      hideAlerts();
-
-      if (mode === 'register') {
-        tabRegister.className = 'flex-1 py-2 px-3 rounded-md font-label-md text-xs sm:text-sm text-surface bg-text-main font-semibold shadow-xs text-center transition-all';
-        tabLogin.className = 'flex-1 py-2 px-3 rounded-md font-label-md text-xs sm:text-sm text-text-muted hover:text-text-main font-semibold text-center transition-all';
-        
-        nameField.classList.remove('hidden');
-        nameField.classList.add('flex');
-        nameInput.required = true;
-
-        authTitle.textContent = 'Join the Club';
-        authSubtitle.textContent = 'Create your member account for birthday rewards & fast checkout';
-        btnText.textContent = 'Create Member Account';
-
-        switchText.innerHTML = 'Already a member? <a class="text-secondary hover:text-gold-hover font-semibold transition-colors cursor-pointer" onclick="switchAuthMode(\'login\')">Sign In</a>';
-      } else {
-        tabLogin.className = 'flex-1 py-2 px-3 rounded-md font-label-md text-xs sm:text-sm text-surface bg-text-main font-semibold shadow-xs text-center transition-all';
-        tabRegister.className = 'flex-1 py-2 px-3 rounded-md font-label-md text-xs sm:text-sm text-text-muted hover:text-text-main font-semibold text-center transition-all';
-        
-        nameField.classList.add('hidden');
-        nameField.classList.remove('flex');
-        nameInput.required = false;
-
-        authTitle.textContent = 'Welcome Back';
-        authSubtitle.textContent = 'Enter your phone or email to access your celebration orders';
-        btnText.textContent = isOtpMode ? 'Verify OTP & Access Orders' : 'Sign In';
-
-        switchText.innerHTML = 'First time here? <a class="text-secondary hover:text-gold-hover font-semibold transition-colors cursor-pointer" onclick="switchAuthMode(\'register\')">Create an Account</a>';
-      }
-    }
-
-    // Toggle between Password and 6-Digit OTP view
-    function toggleOtpView() {
-      isOtpMode = !isOtpMode;
-      const credContainer = document.getElementById('credential-container');
-      const otpContainer = document.getElementById('otp-container');
-      const loginMethodText = document.getElementById('login-method-text');
-      const btnText = document.getElementById('btn-text');
-      const passwordInput = document.getElementById('password-input');
-      const otpInput = document.getElementById('otp-input');
-
-      hideAlerts();
-
-      if (isOtpMode) {
-        credContainer.classList.add('hidden');
-        credContainer.classList.remove('flex');
-        otpContainer.classList.remove('hidden');
-        otpContainer.classList.add('flex');
-        loginMethodText.textContent = 'Use Password Instead';
-        passwordInput.required = false;
-        otpInput.required = true;
-        btnText.textContent = 'Verify OTP & Access Orders';
-        sendOtpCode(); // Automatically trigger OTP dispatch
-      } else {
-        credContainer.classList.remove('hidden');
-        credContainer.classList.add('flex');
-        otpContainer.classList.add('hidden');
-        otpContainer.classList.remove('flex');
-        loginMethodText.textContent = 'Sign in via OTP';
-        passwordInput.required = true;
-        otpInput.required = false;
-        btnText.textContent = currentAuthMode === 'register' ? 'Create Member Account' : 'Sign In';
-      }
-    }
-
-    // Send or Resend OTP
-    async function sendOtpCode() {
-      const identifier = document.getElementById('auth-identifier').value.trim();
-      const resendBtn = document.getElementById('resend-btn');
-      const note = document.getElementById('otp-note');
-
-      if (!identifier) {
-        showError('Please enter your mobile number or email first.');
-        return;
-      }
-
-      resendBtn.disabled = true;
-      resendBtn.textContent = 'Sending OTP...';
-
-      try {
-        const res = await window.DeliceDB.auth.sendOtp(identifier);
-        resendBtn.textContent = 'Sent! Resend in 30s';
-        note.innerHTML = `<span class="text-secondary font-bold">✨ Code dispatched!</span> For testing, your OTP code is: <strong class="bg-surface-container px-1.5 py-0.5 rounded text-text-main text-xs border border-secondary/40">${res.otp}</strong>`;
-        
-        let countdown = 30;
-        const interval = setInterval(() => {
-          countdown--;
-          if (countdown > 0) {
-            resendBtn.textContent = `Resend in ${countdown}s`;
-          } else {
-            clearInterval(interval);
-            resendBtn.disabled = false;
-            resendBtn.textContent = 'Resend OTP';
-          }
-        }, 1000);
-      } catch (err) {
-        resendBtn.disabled = false;
-        resendBtn.textContent = 'Resend OTP';
-        showError(err.message || 'Failed to dispatch OTP.');
-      }
-    }
-
-    // Toggle Password Masking (eye icon)
-    function togglePasswordVisibility() {
-      const pwdInput = document.getElementById('password-input');
-      const icon = document.getElementById('password-toggle-icon');
-      if (pwdInput.type === 'password') {
-        pwdInput.type = 'text';
-        icon.textContent = 'visibility_off';
-      } else {
-        pwdInput.type = 'password';
-        icon.textContent = 'visibility';
-      }
-    }
-
-
-    // Main Form Submit Handler
-    async function handleAuthSubmit(e) {
-      e.preventDefault();
-      hideAlerts();
-
-      const btn = document.getElementById('submit-auth-btn');
-      const spinner = document.getElementById('btn-spinner');
-      const btnText = document.getElementById('btn-text');
-      const identifier = document.getElementById('auth-identifier').value.trim();
-      const password = document.getElementById('password-input').value.trim();
-      const name = document.getElementById('name-input').value.trim();
-      const otpCode = document.getElementById('otp-input').value.trim();
-
-      // UI Loading state
-      btn.disabled = true;
-      spinner.classList.remove('hidden');
-      const origText = btnText.textContent;
-      btnText.textContent = 'Authenticating with Database...';
-
-      try {
-        let authResult = null;
-
-        if (isOtpMode) {
-          // Verify via OTP
-          authResult = await window.DeliceDB.auth.verifyOtp(identifier, otpCode);
-          showSuccess(`✨ Verified successfully! Welcome back, ${authResult.user.full_name}!`);
-        } else if (currentAuthMode === 'register') {
-          // Register / Sign up
-          const isEmail = identifier.includes('@');
-          const emailVal = isEmail ? identifier : `member.${identifier.replace(/[^0-9]/g, '').slice(-10)}@deliceandcake.in`;
-          const phoneVal = isEmail ? '' : identifier;
-
-          authResult = await window.DeliceDB.auth.signUp(emailVal, password, name || 'Connoisseur Member', phoneVal);
-          
-          if (authResult.confirmationPending) {
-            showSuccess(`✨ Account registered! A confirmation message has been prepared for ${emailVal}. Welcome to the Connoisseur Club!`);
-          } else {
-            showSuccess(`✨ Account created successfully! Welcome to Délice & Co., ${name}!`);
-          }
-        } else {
-          // Sign In with identifier + password
-          authResult = await window.DeliceDB.auth.signIn(identifier, password);
-          showSuccess(`⚡ Welcome back, ${authResult.user?.full_name || 'Member'}! Loading your celebration orders...`);
+      if (isOAuthReturn) {
+        var signinAlert = document.getElementById('signinAlert');
+        if (signinAlert) {
+          signinAlert.textContent = '⚡ Verifying Google account and signing you in...';
+          signinAlert.className = 'alert-box alert-success';
+          signinAlert.style.display = 'block';
         }
 
-        sessionStorage.setItem('delice_authenticated', 'true');
-        if (authResult?.user?.role === 'admin') {
-          sessionStorage.setItem('delice_admin_authenticated', 'true');
-        }
-
-        // Jump immediately into website
-        setTimeout(() => {
-          btn.disabled = false;
-          spinner.classList.add('hidden');
-          btnText.textContent = origText;
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const redirect = urlParams.get('redirect');
-
-          if (redirect) {
-            window.location.replace(resolveRedirectUrl(redirect));
-          } else if (authResult?.user?.role === 'admin') {
-            window.location.replace('dashboard.html');
-          } else {
-            window.location.replace('index.html');
-          }
-        }, 500);
-
-      } catch (err) {
-        btn.disabled = false;
-        spinner.classList.add('hidden');
-        btnText.textContent = origText;
-
-        const errStr = (err.message || '').toLowerCase();
-        if (errStr.includes('rate limit') || errStr.includes('429')) {
-          showError('⚡ Supabase email service rate limit reached. Tip: Click "Sign in via OTP" below to sign in instantly without any rate limits!');
-        } else {
-          showError(err.message || 'Authentication error. Please verify credentials.');
-        }
-      }
-    }
-
-    // Render Authenticated Member Hub
-    async function renderMemberHub(user) {
-      document.getElementById('auth-box').classList.add('hidden');
-      const hubBox = document.getElementById('member-hub-box');
-      hubBox.classList.remove('hidden');
-
-      // Populate User Details
-      document.getElementById('hub-user-name').textContent = user.full_name || 'Connoisseur Member';
-      document.getElementById('hub-user-contact').textContent = `${user.phone || 'Phone not set'} • ${user.email || 'Email not set'}`;
-      
-      const roleBadge = document.getElementById('hub-role-badge');
-      if (user.role === 'admin' || user.role === 'staff') {
-        roleBadge.textContent = 'Admin / Staff';
-        roleBadge.className = 'px-2 py-0.5 rounded-full bg-text-main text-surface text-[10px] font-bold uppercase tracking-wider';
-        document.getElementById('admin-gateway-banner').classList.remove('hidden');
-        document.getElementById('admin-gateway-banner').classList.add('flex');
-      } else {
-        roleBadge.textContent = 'Gold Member';
-      }
-
-      // Generate Initials
-      const parts = (user.full_name || 'D C').split(' ');
-      const initials = (parts[0]?.[0] || 'D') + (parts[1]?.[0] || 'C');
-      document.getElementById('user-avatar-initials').textContent = initials.toUpperCase();
-
-      // Fetch Real Orders from Supabase Database
-      await loadUserOrders(user.phone, user.email);
-    }
-
-    // Load Real Orders from Database
-    async function loadUserOrders(phone, email) {
-      const container = document.getElementById('orders-list-container');
-      const countBadge = document.getElementById('orders-count-badge');
-
-      try {
-        const orders = await window.DeliceDB.auth.fetchCustomerOrders(phone, email);
-        
-        if (!orders || orders.length === 0) {
-          countBadge.textContent = '0 Orders';
-          container.innerHTML = `
-            <div class="p-6 rounded-lg bg-surface-container-low border border-border-delicate/60 text-center flex flex-col items-center gap-2">
-              <span class="text-3xl">🎂</span>
-              <p class="font-body-sm text-xs text-text-muted">No cake orders found yet under your account.</p>
-              <a href="index.html#cakes" class="mt-1 px-4 py-2 rounded-lg bg-secondary text-surface text-xs font-bold hover:bg-gold-hover transition-colors">
-                Order Your First Cake ⚡
-              </a>
-            </div>
-          `;
-          return;
-        }
-
-        countBadge.textContent = `${orders.length} ${orders.length === 1 ? 'Order' : 'Orders'} Found`;
-
-        container.innerHTML = orders.map(ord => {
-          const statusColors = {
-            'PLACED': 'bg-blue-50 text-blue-700 border-blue-200',
-            'CONFIRMED': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            'PREPARING': 'bg-amber-50 text-amber-700 border-amber-200',
-            'BAKING': 'bg-purple-50 text-purple-700 border-purple-200',
-            'READY': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-            'OUT_FOR_DELIVERY': 'bg-orange-50 text-orange-700 border-orange-200',
-            'DELIVERED': 'bg-green-50 text-green-800 border-green-200',
-            'CANCELLED': 'bg-red-50 text-red-700 border-red-200'
-          };
-          const badgeClass = statusColors[ord.status] || 'bg-gray-100 text-gray-700 border-gray-200';
-          const formattedDate = ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
-
-          return `
-            <div class="p-3.5 rounded-lg bg-surface-container-low hover:bg-surface border border-border-delicate/70 transition-all flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="font-serif font-bold text-text-main text-sm">${ord.order_number || 'Order'}</span>
-                  <span class="text-[10px] text-text-muted">• ${formattedDate}</span>
-                </div>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${badgeClass}">
-                  ${ord.status}
-                </span>
-              </div>
-              <div class="flex items-center justify-between text-xs text-text-muted">
-                <span>Total: <strong class="text-text-main font-bold">₹${ord.total || ord.subtotal || 0}</strong> • ${ord.payment_status === 'PAID' ? '💳 Paid Online' : '💵 Pay on Delivery'}</span>
-                <span class="text-[11px] text-text-muted font-medium">Boutique Order</span>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-      } catch (e) {
-        console.error('Error rendering orders:', e);
-        countBadge.textContent = 'Orders Pending';
-        container.innerHTML = `
-          <div class="p-4 rounded-lg bg-surface-container-low text-center text-xs text-text-muted">
-            Could not fetch order history right now. Please refresh or contact customer care at +91 99094 44882.
-          </div>
-        `;
-      }
-    }
-
-    // Sign Out Handler
-    async function handleSignOut() {
-      if (confirm('Are you sure you want to sign out from Délice & Co.?')) {
-        await window.DeliceDB.auth.signOut();
-        window.location.reload();
-      }
-    }
-
-    // Google / Social OAuth Trigger
-    // Google / Social OAuth Trigger (Direct In-Window Redirect)
-    async function triggerThirdPartyLogin(provider) {
-      hideAlerts();
-      if (provider === 'Google') {
-        showSuccess('Connecting to official Google Sign-In...');
-        try {
-          const client = window.DeliceDB?.getClient();
-          if (!client) {
-            showError('Database client initializing, please try again in a moment.');
-            return;
-          }
-
-          let origin = window.location.origin;
-          if (!origin || origin === 'null' || !origin.startsWith('http')) {
-            showError('Google Sign-In requires running through a local web server (http://localhost:3000) or Netlify.');
-            return;
-          }
-
-          const pathname = window.location.pathname.endsWith('/') ? window.location.pathname + 'login.html' : window.location.pathname;
-          const redirectUrl = origin + pathname;
-
-          // Direct browser redirect in same window (no popup blocker, no severed opener)
-          const { data, error } = await client.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: redirectUrl,
-              queryParams: {
-                access_type: 'offline',
-                prompt: 'select_account'
-              }
-            }
-          });
-
-          if (error) {
-            showError('Google OAuth notice: ' + error.message);
-            return;
-          }
-
-          if (data?.url) {
-            window.location.href = data.url;
-            return;
-          }
-        } catch (e) {
-          console.error('Google OAuth launch error:', e);
-          showError('Google Sign-In notice: ' + (e.message || 'Please retry.'));
-        }
-      } else if (provider === 'WhatsApp') {
-        const phone = document.getElementById('auth-identifier').value.replace(/[^0-9]/g, '') || '919909444882';
-        const msg = encodeURIComponent("Hello Délice & Co.! I am requesting instant Connoisseur Club verification for my orders.");
-        window.open(`https://wa.me/919909444882?text=${msg}`, '_blank');
-        showSuccess('Dispatched WhatsApp verification to Délice & Co. Vadodara (+91 99094 44882).');
-      }
-    }
-
-    // Process authenticated OAuth user profile and jump to website
-    function handleOAuthSuccess(user) {
-      if (!user) return;
-      const email = user.email || '';
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.full_name || (email ? email.split('@')[0] : 'Connoisseur Member');
-      const role = (user.user_metadata?.role === 'admin' || user.role === 'admin') ? 'admin' : 'customer';
-
-      const userProfile = {
-        id: user.id || ('google-' + Date.now()),
-        email: email,
-        full_name: fullName,
-        phone: user.user_metadata?.phone || user.phone || '',
-        role: role,
-        provider: 'google'
-      };
-
-      localStorage.setItem('delice_user', JSON.stringify(userProfile));
-      localStorage.setItem('delice_user_email', email);
-      localStorage.setItem('delice_user_name', fullName);
-      localStorage.setItem('delice_oauth_sync_timestamp', Date.now().toString());
-      sessionStorage.setItem('delice_authenticated', 'true');
-      if (role === 'admin') {
-        sessionStorage.setItem('delice_admin_authenticated', 'true');
-      }
-
-      // If running inside a popup window with opener attached
-      if (window.opener && !window.opener.closed) {
-        try {
-          window.opener.localStorage.setItem('delice_user', JSON.stringify(userProfile));
-          window.opener.localStorage.setItem('delice_user_email', email);
-          window.opener.localStorage.setItem('delice_user_name', fullName);
-          window.opener.sessionStorage.setItem('delice_authenticated', 'true');
-          if (role === 'admin') {
-            window.opener.sessionStorage.setItem('delice_admin_authenticated', 'true');
-          }
+        setTimeout(async function() {
           try {
-            window.opener.postMessage({ type: 'DELICE_GOOGLE_AUTH_SUCCESS', user: userProfile }, '*');
-          } catch (postErr) {}
-          window.opener.location.replace('index.html');
-        } catch (e) {
-          console.warn('Opener sync error:', e);
-        }
-        window.close();
-        return;
-      }
+            var client = window.DeliceDB?.getClient();
+            if (client) {
+              var sessionRes = await client.auth.getSession();
+              if (sessionRes?.data?.session?.user) {
+                var gUser = sessionRes.data.session.user;
+                var gProfile = {
+                  id: gUser.id,
+                  email: gUser.email,
+                  full_name: gUser.user_metadata?.full_name || gUser.user_metadata?.name || (gUser.email ? gUser.email.split('@')[0] : 'Connoisseur Member'),
+                  phone: gUser.user_metadata?.phone || gUser.phone || '',
+                  role: gUser.user_metadata?.role || 'customer',
+                  provider: 'google'
+                };
 
-      // If opened in a small popup where Edge severed opener
-      if (window.name === 'google_oauth_popup' || (window.innerWidth < 650 && window.innerHeight < 720)) {
-        showSuccess(`✨ Welcome, ${fullName}! Successfully signed in via Google.`);
-        document.body.innerHTML = `
-          <div style="font-family:'Plus Jakarta Sans',sans-serif; text-align:center; padding:40px 20px; background:#FAF7F2; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <div style="font-size:36px; margin-bottom:12px;">🎂</div>
-            <h2 style="font-family:'Playfair Display',serif; color:#1B3358; font-size:22px; margin:0 0 8px;">Welcome, ${fullName}!</h2>
-            <p style="color:#64748B; font-size:13px; margin:0 0 20px;">You are now signed in to Délice &amp; Co. Connoisseur Club.</p>
-            <a href="index.html" style="display:inline-block; background:#1B3358; color:#fff; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:700; font-size:14px; box-shadow:0 4px 14px rgba(27,51,88,0.25);">Enter Délice &amp; Co. Boutique ➔</a>
-            <p style="font-size:11px; color:#94A3B8; margin-top:16px;">This popup will close automatically...</p>
-          </div>
-        `;
-        setTimeout(() => {
-          try { window.close(); } catch (e) {}
-        }, 1200);
-        return;
-      }
+                localStorage.setItem('delice_user', JSON.stringify(gProfile));
+                localStorage.setItem('delice_guest_browse', 'true');
+                sessionStorage.setItem('delice_authenticated', 'true');
 
-      // If running in main window:
-      showSuccess(`✨ Welcome, ${fullName}! Successfully signed in via Google.`);
-      setTimeout(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect');
-        window.location.replace(resolveRedirectUrl(redirect));
-      }, 350);
-    }
+                try {
+                  await client.from('profiles').upsert({
+                    id: gProfile.id,
+                    full_name: gProfile.full_name,
+                    email: gProfile.email,
+                    phone: gProfile.phone,
+                    role: gProfile.role
+                  });
+                } catch (pe) {}
 
-    // Cross-window message & storage sync listeners
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'DELICE_GOOGLE_AUTH_SUCCESS') {
-        sessionStorage.setItem('delice_authenticated', 'true');
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect');
-        window.location.replace(resolveRedirectUrl(redirect));
-      }
-    });
-
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'delice_user' && event.newValue) {
-        sessionStorage.setItem('delice_authenticated', 'true');
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect');
-        window.location.replace(resolveRedirectUrl(redirect));
-      }
-    });
-
-    // Helper: enter boutique as guest
-    function enterAsGuest(e, url) {
-      try {
-        sessionStorage.setItem('delice_guest_browse', 'true');
-      } catch (err) {}
-      if (url) {
-        if (e && e.preventDefault) e.preventDefault();
-        var targetUrl = url;
-        if (!targetUrl.includes('guest=1') && !targetUrl.includes('#')) {
-          targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'guest=1';
-        }
-        window.location.href = targetUrl;
-      }
-    }
-
-    // Helper: resolve redirect URL (e.g. checkout -> index.html?continue_checkout=1#checkout)
-    function resolveRedirectUrl(raw) {
-      if (!raw) return 'index.html';
-      if (raw === 'checkout' || raw === '#checkout' || raw.includes('#checkout') || raw.includes('checkout')) {
-        return 'index.html?continue_checkout=1#checkout';
-      }
-      return raw;
-    }
-
-    // Auto-show required login banner if coming from an order attempt
-    window.addEventListener('DOMContentLoaded', () => {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('require_login') === 'true') {
-          const notice = document.getElementById('order-auth-notice');
-          if (notice) {
-            notice.classList.remove('hidden');
-            notice.classList.add('flex');
+                var storedTarget = sessionStorage.getItem('delice_oauth_target_redirect') || getTargetRedirect();
+                sessionStorage.removeItem('delice_oauth_target_redirect');
+                window.location.replace(storedTarget);
+                return;
+              }
+            }
+          } catch (oe) {
+            console.warn('OAuth session verification:', oe);
           }
+        }, 350);
+      }
+
+      // Check if user is already logged in
+      var raw = localStorage.getItem('delice_user');
+      if (!isOAuthReturn && raw && params.get('logout') !== '1') {
+        try {
+          var u = JSON.parse(raw);
+          if (u && (u.id || u.email || u.phone)) {
+            var loggedCard = document.getElementById('alreadyLoggedInCard');
+            var userInfo = document.getElementById('loggedInUserInfo');
+            var tabs = document.querySelector('.auth-tabs');
+            var googleSec = document.getElementById('googleAuthSection');
+            var panelSignIn = document.getElementById('panelSignIn');
+            var panelCreate = document.getElementById('panelCreate');
+            var guestSec = document.querySelector('.guest-section');
+
+            if (loggedCard && userInfo) {
+              userInfo.innerHTML = 'Signed in as <strong>' + (u.full_name || u.email || 'Member') + '</strong>' + (u.email ? '<br><span style="font-size:12.5px; color:#94A3B8;">' + u.email + '</span>' : '');
+              loggedCard.style.display = 'block';
+              if (tabs) tabs.style.display = 'none';
+              if (googleSec) googleSec.style.display = 'none';
+              if (panelSignIn) panelSignIn.style.display = 'none';
+              if (panelCreate) panelCreate.style.display = 'none';
+              if (guestSec) guestSec.style.display = 'none';
+            }
+          }
+        } catch (e) {}
+      } else if (params.get('logout') === '1') {
+        handleLogoutSubmit(true);
+      }
+
+      // Check and enforce rate limiting state on load
+      checkLoginRateLimit();
+    })();
+
+    // -------------------------------------------------------------
+    // FRONTEND LOGIN RATE LIMITING & BRUTE-FORCE PROTECTION
+    // Enforces a 60-second cooldown after 5 consecutive failed attempts
+    // -------------------------------------------------------------
+    var LOGIN_RATE_LIMIT = {
+      MAX_ATTEMPTS: 5,
+      LOCKOUT_SECONDS: 60,
+      KEY_ATTEMPTS: 'delice_login_failed_attempts',
+      KEY_LOCKOUT_UNTIL: 'delice_login_lockout_until'
+    };
+
+    var lockoutTimerInterval = null;
+
+    function getRemainingLockoutSeconds() {
+      try {
+        var until = parseInt(localStorage.getItem(LOGIN_RATE_LIMIT.KEY_LOCKOUT_UNTIL) || '0', 10);
+        var now = Date.now();
+        if (until > now) {
+          return Math.ceil((until - now) / 1000);
         }
       } catch (e) {}
-    });
+      return 0;
+    }
 
-    // Forgot Password Trigger
-    async function forgotPasswordAlert() {
-      const email = prompt("Please enter your registered email address to receive password reset instructions:", "shravanprajapati9909@gmail.com");
-      if (email && email.trim()) {
-        try {
-          await window.DeliceDB.auth.resetPassword(email.trim());
-          alert(`✨ A secure password reset link has been dispatched to ${email}. Please check your inbox.`);
-        } catch (err) {
-          alert(`Password reset notification: ${err.message}`);
+    function checkLoginRateLimit() {
+      var remaining = getRemainingLockoutSeconds();
+      var submitBtn = document.getElementById('btnSignInSubmit');
+      var alertBox = document.getElementById('signinAlert');
+
+      if (remaining > 0) {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span>🔒 Locked (' + remaining + 's)</span>';
+        }
+        if (alertBox) {
+          alertBox.innerHTML = '⚠️ <strong>Too many failed attempts.</strong><br>For your security, please wait <strong><span id="rateLimitTimer">' + remaining + '</span>s</strong> before trying again.';
+          alertBox.className = 'alert-box alert-error';
+          alertBox.style.display = 'block';
+        }
+
+        if (!lockoutTimerInterval) {
+          lockoutTimerInterval = setInterval(function() {
+            var rem = getRemainingLockoutSeconds();
+            var timerSpan = document.getElementById('rateLimitTimer');
+            if (timerSpan) timerSpan.textContent = rem;
+            var btn = document.getElementById('btnSignInSubmit');
+            if (btn) btn.innerHTML = '<span>🔒 Locked (' + rem + 's)</span>';
+
+            if (rem <= 0) {
+              clearInterval(lockoutTimerInterval);
+              lockoutTimerInterval = null;
+              try {
+                localStorage.removeItem(LOGIN_RATE_LIMIT.KEY_LOCKOUT_UNTIL);
+                localStorage.setItem(LOGIN_RATE_LIMIT.KEY_ATTEMPTS, '0');
+              } catch (e) {}
+              if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Sign In to Account</span><span>➔</span>';
+              }
+              var box = document.getElementById('signinAlert');
+              if (box) {
+                box.textContent = '✨ Cooldown expired. You may now attempt to sign in.';
+                box.className = 'alert-box alert-success';
+                box.style.display = 'block';
+              }
+            }
+          }, 1000);
+        }
+        return false;
+      }
+      return true;
+    }
+
+    function recordFailedLoginAttempt() {
+      try {
+        var current = parseInt(localStorage.getItem(LOGIN_RATE_LIMIT.KEY_ATTEMPTS) || '0', 10) + 1;
+        localStorage.setItem(LOGIN_RATE_LIMIT.KEY_ATTEMPTS, String(current));
+
+        if (current >= LOGIN_RATE_LIMIT.MAX_ATTEMPTS) {
+          var lockoutUntil = Date.now() + (LOGIN_RATE_LIMIT.LOCKOUT_SECONDS * 1000);
+          localStorage.setItem(LOGIN_RATE_LIMIT.KEY_LOCKOUT_UNTIL, String(lockoutUntil));
+          checkLoginRateLimit();
+          return { locked: true, attempts: current, remaining: 0 };
+        }
+        return { locked: false, attempts: current, remaining: LOGIN_RATE_LIMIT.MAX_ATTEMPTS - current };
+      } catch (e) {
+        return { locked: false, attempts: 1, remaining: 4 };
+      }
+    }
+
+    function resetLoginRateLimit() {
+      try {
+        localStorage.removeItem(LOGIN_RATE_LIMIT.KEY_ATTEMPTS);
+        localStorage.removeItem(LOGIN_RATE_LIMIT.KEY_LOCKOUT_UNTIL);
+      } catch (e) {}
+      if (lockoutTimerInterval) {
+        clearInterval(lockoutTimerInterval);
+        lockoutTimerInterval = null;
+      }
+    }
+
+    async function handleLogoutSubmit(silent) {
+      try {
+        if (window.DeliceDB && window.DeliceDB.auth && typeof window.DeliceDB.auth.signOut === 'function') {
+          await window.DeliceDB.auth.signOut();
+        }
+      } catch (e) {}
+
+      try {
+        localStorage.removeItem('delice_user');
+        localStorage.removeItem('delice_user_email');
+        localStorage.removeItem('delice_user_phone');
+        localStorage.removeItem('delice_user_name');
+        localStorage.removeItem('delice_authenticated');
+        localStorage.removeItem('delice_supabase_auth_token');
+        sessionStorage.removeItem('delice_authenticated');
+        sessionStorage.removeItem('delice_guest_checkout');
+      } catch (e) {}
+
+      var loggedCard = document.getElementById('alreadyLoggedInCard');
+      if (loggedCard) loggedCard.style.display = 'none';
+
+      var tabs = document.querySelector('.auth-tabs');
+      if (tabs) tabs.style.display = 'flex';
+
+      var googleSec = document.getElementById('googleAuthSection');
+      if (googleSec) googleSec.style.display = 'block';
+
+      var panelSignIn = document.getElementById('panelSignIn');
+      if (panelSignIn) panelSignIn.style.display = 'block';
+
+      var guestSec = document.querySelector('.guest-section');
+      if (guestSec) guestSec.style.display = 'block';
+
+      var signinAlert = document.getElementById('signinAlert');
+      if (signinAlert) {
+        signinAlert.textContent = '✨ You have been safely logged out. Sign in below anytime.';
+        signinAlert.className = 'alert-box alert-success';
+        signinAlert.style.display = 'block';
+      }
+    }
+
+    async function signInWithGoogle() {
+      var alertBox = document.getElementById('signinAlert') || document.getElementById('createAlert');
+      var btn = document.getElementById('btnGoogleAuth');
+      try {
+        if (!window.DeliceDB) {
+          throw new Error('Database client is connecting. Please retry in a moment.');
+        }
+        var client = window.DeliceDB.getClient();
+        if (!client) {
+          throw new Error('Database client could not be loaded.');
+        }
+
+        if (btn) {
+          btn.style.opacity = '0.7';
+          btn.querySelector('span').textContent = 'Connecting to Google...';
+        }
+
+        var redirectUrl = window.location.origin + window.location.pathname;
+        var targetRedirect = getTargetRedirect();
+        if (targetRedirect && targetRedirect !== 'index.html') {
+          try {
+            sessionStorage.setItem('delice_oauth_target_redirect', targetRedirect);
+          } catch (e) {}
+        }
+
+        var res = await client.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: false
+          }
+        });
+
+        if (res.error) {
+          throw res.error;
+        }
+        if (res.data && res.data.url) {
+          window.location.href = res.data.url;
+        }
+      } catch (err) {
+        if (btn) {
+          btn.style.opacity = '1';
+          btn.querySelector('span').textContent = 'Continue with Google';
+        }
+        if (alertBox) {
+          alertBox.textContent = 'Google Sign-In: ' + (err.message || 'OAuth error. Check Supabase Google provider configuration.');
+          alertBox.className = 'alert-box alert-error';
+          alertBox.style.display = 'block';
         }
       }
     }
 
-    // UI Feedback Helpers
-    function showSuccess(msg) {
-      const banner = document.getElementById('auth-status-banner');
-      const text = document.getElementById('auth-status-text');
-      const errBanner = document.getElementById('auth-error-banner');
-      errBanner.classList.add('hidden');
-      errBanner.classList.remove('flex');
-      text.textContent = msg;
-      banner.classList.remove('hidden');
-      banner.classList.add('flex');
+    function switchAuthTab(tab) {
+      var tabSignIn = document.getElementById('tabSignIn');
+      var tabCreate = document.getElementById('tabCreate');
+      var panelSignIn = document.getElementById('panelSignIn');
+      var panelCreate = document.getElementById('panelCreate');
+
+      var signinAlert = document.getElementById('signinAlert');
+      var createAlert = document.getElementById('createAlert');
+      if (signinAlert) signinAlert.style.display = 'none';
+      if (createAlert) createAlert.style.display = 'none';
+
+      if (tab === 'create') {
+        tabCreate.classList.add('active');
+        tabCreate.setAttribute('aria-selected', 'true');
+        tabSignIn.classList.remove('active');
+        tabSignIn.setAttribute('aria-selected', 'false');
+        panelCreate.style.display = 'block';
+        panelSignIn.style.display = 'none';
+      } else {
+        tabSignIn.classList.add('active');
+        tabSignIn.setAttribute('aria-selected', 'true');
+        tabCreate.classList.remove('active');
+        tabCreate.setAttribute('aria-selected', 'false');
+        panelSignIn.style.display = 'block';
+        panelCreate.style.display = 'none';
+        checkLoginRateLimit();
+      }
     }
 
-    function showError(msg) {
-      const banner = document.getElementById('auth-error-banner');
-      const text = document.getElementById('auth-error-text');
-      const succBanner = document.getElementById('auth-status-banner');
-      succBanner.classList.add('hidden');
-      succBanner.classList.remove('flex');
-      text.textContent = msg;
-      banner.classList.remove('hidden');
-      banner.classList.add('flex');
+    function togglePasswordVisibility(inputId, btn) {
+      var input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
     }
 
-    function hideAlerts() {
-      const b1 = document.getElementById('auth-status-banner');
-      const b2 = document.getElementById('auth-error-banner');
-      if (b1) { b1.classList.add('hidden'); b1.classList.remove('flex'); }
-      if (b2) { b2.classList.add('hidden'); b2.classList.remove('flex'); }
+    function enterAsGuest(e) {
+      try {
+        localStorage.setItem('delice_guest_browse', 'true');
+        sessionStorage.setItem('delice_guest_browse', 'true');
+      } catch (err) {}
+    }
+
+    function getTargetRedirect() {
+      var params = new URLSearchParams(window.location.search);
+      var redirect = params.get('redirect');
+      if (redirect === 'checkout' || redirect === '#checkout') {
+        return 'index.html?continue_checkout=1#orderModal';
+      }
+      return redirect || 'index.html';
+    }
+
+    // Sign In handler
+    async function handleSignInSubmit(e) {
+      e.preventDefault();
+      var emailEl = document.getElementById('signinEmail');
+      var passEl = document.getElementById('signinPassword');
+      var alertBox = document.getElementById('signinAlert');
+      var submitBtn = document.getElementById('btnSignInSubmit');
+
+      // Enforce rate limiting lockout before proceeding
+      if (!checkLoginRateLimit()) {
+        return;
+      }
+
+      var ident = (emailEl.value || '').trim();
+      var pass = (passEl.value || '').trim();
+
+      alertBox.style.display = 'none';
+
+      if (!ident || !pass) {
+        alertBox.textContent = 'Please enter both your email/phone and password.';
+        alertBox.className = 'alert-box alert-error';
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying credentials...</span>';
+
+      try {
+        if (!window.DeliceDB || !window.DeliceDB.auth) {
+          throw new Error('Database connection is initializing. Please try again.');
+        }
+
+        var res = await window.DeliceDB.auth.signIn(ident, pass);
+        if (!res || !res.user) {
+          throw new Error('Invalid email or password. Please check your credentials.');
+        }
+
+        // Reset rate limit counter on success
+        resetLoginRateLimit();
+
+        // Store user and mark session
+        localStorage.setItem('delice_user', JSON.stringify(res.user));
+        localStorage.setItem('delice_guest_browse', 'true');
+        sessionStorage.setItem('delice_authenticated', 'true');
+
+        window.location.replace(getTargetRedirect());
+      } catch (err) {
+        var rateStatus = recordFailedLoginAttempt();
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Sign In to Account</span><span>➔</span>';
+
+        if (rateStatus.locked) {
+          checkLoginRateLimit();
+        } else {
+          var baseMsg = err.message || 'Unable to sign in. Please verify your email and password.';
+          alertBox.innerHTML = baseMsg + '<br><span style="font-size:12px; opacity:0.85; margin-top:5px; display:inline-block;">⚠️ ' + rateStatus.remaining + ' attempt' + (rateStatus.remaining === 1 ? '' : 's') + ' remaining before temporary 60-second cooldown.</span>';
+          alertBox.className = 'alert-box alert-error';
+          alertBox.style.display = 'block';
+        }
+      }
+    }
+
+    // Create Account handler
+    async function handleCreateAccountSubmit(e) {
+      e.preventDefault();
+      var nameEl = document.getElementById('createName');
+      var emailEl = document.getElementById('createEmail');
+      var phoneEl = document.getElementById('createPhone');
+      var passEl = document.getElementById('createPassword');
+      var alertBox = document.getElementById('createAlert');
+      var submitBtn = document.getElementById('btnCreateSubmit');
+
+      var name = (nameEl.value || '').trim();
+      var email = (emailEl.value || '').trim();
+      var phone = (phoneEl.value || '').trim();
+      var pass = (passEl.value || '').trim();
+
+      alertBox.style.display = 'none';
+
+      if (!name) {
+        alertBox.textContent = 'Please enter your full name.';
+        alertBox.className = 'alert-box alert-error';
+        alertBox.style.display = 'block';
+        return;
+      }
+      if (!email || !email.includes('@')) {
+        alertBox.textContent = 'Please enter a valid email address.';
+        alertBox.className = 'alert-box alert-error';
+        alertBox.style.display = 'block';
+        return;
+      }
+      if (!pass || pass.length < 6) {
+        alertBox.textContent = 'Password must be at least 6 characters long.';
+        alertBox.className = 'alert-box alert-error';
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Creating your account...</span>';
+
+      try {
+        if (!window.DeliceDB || !window.DeliceDB.auth) {
+          throw new Error('Database connection is initializing. Please try again.');
+        }
+
+        var res = await window.DeliceDB.auth.signUp(email, pass, name, phone);
+        if (!res || !res.user) {
+          throw new Error('Could not create account. Please try again.');
+        }
+
+        alertBox.textContent = '✨ Account created! Storing in database and signing you in...';
+        alertBox.className = 'alert-box alert-success';
+        alertBox.style.display = 'block';
+
+        localStorage.setItem('delice_user', JSON.stringify(res.user));
+        localStorage.setItem('delice_guest_browse', 'true');
+        sessionStorage.setItem('delice_authenticated', 'true');
+
+        setTimeout(function() {
+          window.location.replace(getTargetRedirect());
+        }, 600);
+      } catch (err) {
+        alertBox.textContent = err.message || 'Error creating account. Please try again.';
+        alertBox.className = 'alert-box alert-error';
+        alertBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Create Account &amp; Continue</span><span>➔</span>';
+      }
     }
   </script>
-
 </body>
 </html>
