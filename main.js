@@ -2525,18 +2525,21 @@ Customer Support: +91 99094 44882 | orders@deliceandcake.in`;
        ===================================================================== */
     const jbHelpFab = $('jbHelpFab');
     const jbHelpPanel = $('jbHelpPanel');
+    const jbHelp = $('jbHelp');
 
     if (jbHelpFab && jbHelpPanel) {
         jbHelpFab.addEventListener('click', e => {
             e.stopPropagation();
-            const isOpen = jbHelpPanel.classList.contains('open');
+            const isOpen = jbHelpPanel.classList.contains('open') || (jbHelp && jbHelp.classList.contains('is-open'));
             jbHelpPanel.classList.toggle('open', !isOpen);
+            if (jbHelp) jbHelp.classList.toggle('is-open', !isOpen);
             jbHelpFab.setAttribute('aria-expanded', !isOpen);
         });
 
         document.addEventListener('click', e => {
             if (!jbHelpPanel.contains(e.target) && e.target !== jbHelpFab) {
                 jbHelpPanel.classList.remove('open');
+                if (jbHelp) jbHelp.classList.remove('is-open');
                 jbHelpFab.setAttribute('aria-expanded', 'false');
             }
         });
