@@ -984,18 +984,41 @@
                 <div class="checkout-payment-methods">
                     <div class="payment-method-card active" id="payMethodRazorpay" onclick="window.selectPaymentMethod('RAZORPAY')">
                         <div class="method-header">
-                            <span>💳</span>
-                            <span>Razorpay Gateway</span>
+                            <span class="method-icon-wrap">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                    <line x1="1" y1="10" x2="23" y2="10"/>
+                                </svg>
+                            </span>
+                            <span class="method-title">Razorpay Gateway</span>
+                            <span class="method-pill-fast">⚡ Instant</span>
                         </div>
-                        <div class="method-sub">Cards, NetBanking, UPI (Test Mode)</div>
-                        <div style="font-size:0.68rem; color:#10B981; font-weight:600; margin-top:3px;">UPI: success@razorpay • Card: 4012...</div>
+                        <div class="method-sub">UPI, Credit/Debit Cards, NetBanking</div>
+                        <div class="method-brands-row">
+                            <span class="pay-brand-tag">GPay</span>
+                            <span class="pay-brand-tag">PhonePe</span>
+                            <span class="pay-brand-tag">Paytm</span>
+                            <span class="pay-brand-tag">Cards</span>
+                            <span class="pay-brand-tag">UPI QR</span>
+                        </div>
+                        <div class="method-test-note">
+                            <span class="test-dot"></span>
+                            <span>Test Mode • UPI: success@razorpay</span>
+                        </div>
                     </div>
                     <div class="payment-method-card" id="payMethodCOD" onclick="window.selectPaymentMethod('COD')">
                         <div class="method-header">
-                            <span>💵</span>
-                            <span>Pay on Delivery</span>
+                            <span class="method-icon-wrap">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                    <circle cx="12" cy="12" r="2.5"/>
+                                    <path d="M6 12h.01M18 12h.01"/>
+                                </svg>
+                            </span>
+                            <span class="method-title">Pay on Delivery</span>
                         </div>
-                        <div class="method-sub">Cash or UPI upon delivery</div>
+                        <div class="method-sub">Cash or UPI upon doorstep delivery</div>
+                        <div class="method-cod-assurance">✓ Pay comfortably upon courier arrival</div>
                     </div>
                 </div>
             </div>
@@ -1016,6 +1039,12 @@
                     </svg>
                     <span id="btnSubmitOrderText">Pay Securely via Razorpay (Test Mode)</span>
                 </button>
+                <div class="rzp-trust-footer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#CBA46B;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>256-Bit SSL Encrypted • Verified by Razorpay • RBI Compliant</span>
+                </div>
             </div>
         </form>
 

@@ -1353,19 +1353,34 @@
                 throw new Error('Razorpay Checkout SDK is still loading or blocked by an ad-blocker. Please check your internet connection or switch to Cash / UPI on Delivery.');
             }
 
+            // Absolute merchant image URL for Razorpay iframe
+            const merchantLogo = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.startsWith('http'))
+                ? window.location.origin + '/assets/apple-touch-icon.png'
+                : 'https://delicecakes.netlify.app/assets/apple-touch-icon.png';
+
             const options = {
                 key: activeKey,
                 amount: rzpAmount,
                 currency: 'INR',
                 name: 'DÉLICE & CO.',
-                description: `Artisan Cake Order #${order.order_number}`,
-                image: 'assets/cake_velvet.jpg',
+                description: `Artisan Order #${order.order_number} • 100% Pure Veg`,
+                image: merchantLogo,
                 prefill: {
                     name: customer?.name || 'Customer',
                     contact: customer?.phone || '',
                     email: customer?.email || ''
                 },
-                theme: { color: '#C25E34' },
+                notes: {
+                    order_number: order.order_number,
+                    patisserie: 'Délice & Co. Artisan Patisserie',
+                    delivery_schedule: `${order.deliveryDate || 'Scheduled'} (${order.deliverySlotText || 'Express 2-Hour'})`,
+                    dietary_assurance: '100% Pure Veg & Eggless (Vadodara)'
+                },
+                theme: {
+                    color: '#1B3358', // Délice Royal Navy
+                    backdrop_color: 'rgba(11, 19, 34, 0.85)',
+                    hide_topbar: false
+                },
                 handler: async function (response) {
                     // Try backend verification if server exists
                     try {
@@ -1391,6 +1406,11 @@
                     }
                 },
                 modal: {
+                    backdropclose: false,
+                    escape: true,
+                    handleback: true,
+                    confirm_close: true,
+                    animation: true,
                     ondismiss: function () {
                         const submitBtn = $('btnSubmitOrder');
                         const submitText = $('btnSubmitOrderText');
@@ -1398,6 +1418,35 @@
                         if (submitText) submitText.textContent = 'Pay Securely via Razorpay (Test Mode)';
                         if (onPaymentFailure) {
                             onPaymentFailure({ message: 'Payment was cancelled. You can retry or select Cash/UPI on Delivery.' });
+                        }
+                    }
+                },
+                config: {
+                    display: {
+                        blocks: {
+                            upi: {
+                                name: 'Pay via UPI / QR (Instant)',
+                                instruments: [
+                                    { method: 'upi' }
+                                ]
+                            },
+                            cards: {
+                                name: 'Cards (Credit / Debit / ATM)',
+                                instruments: [
+                                    { method: 'card' }
+                                ]
+                            },
+                            netbanking: {
+                                name: 'Net Banking & Wallets',
+                                instruments: [
+                                    { method: 'netbanking' },
+                                    { method: 'wallet' }
+                                ]
+                            }
+                        },
+                        sequence: ['block.upi', 'block.cards', 'block.netbanking'],
+                        preferences: {
+                            show_default_blocks: true
                         }
                     }
                 }

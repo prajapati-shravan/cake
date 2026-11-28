@@ -92,15 +92,19 @@ exports.handler = async (event) => {
   const storeEmail = (process.env.STORE_EMAIL || 'orders@deliceandcake.in').trim();
   const storeName = process.env.STORE_NAME || 'Cake & Joy';
 
+  const gmailUser = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim();
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').trim().replace(/\s+/g, '');
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
-  if (!resendApiKey) {
-    console.error('[EMAIL FUNCTION] Server Error: RESEND_API_KEY is not configured in Netlify environment variables.');
+
+  if (!gmailUser && !resendApiKey) {
+    console.warn('[EMAIL FUNCTION] Notice: Neither GMAIL_USER nor RESEND_API_KEY is configured in Netlify environment variables.');
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: false,
-        error: 'Server Configuration Error: RESEND_API_KEY is not set in Netlify environment variables.'
+        warning: 'Email dispatch skipped: configure GMAIL_USER & GMAIL_APP_PASSWORD or RESEND_API_KEY in Netlify settings.',
+        tracking_url: trackUrl
       })
     };
   }
@@ -252,75 +256,128 @@ Customer Support: ${storePhone} | ${storeEmail}
 ========================================
 `;
 
-  // 8. Build Resend API Payload
-  const resendPayload = {
-    from: resendFrom,
-    to: [custEmail],
-    reply_to: storeEmail,
-    subject: subject,
-    html: htmlContent,
-    text: textFallback
-  };
+  // 8. Dispatch via Gmail SMTP (Nodemailer) if configured
+  if (gmailUser && gmailPass) {
+    try {
+      let nodemailer = null;
+      try { nodemailer = require('nodemailer'); } catch (e) {}
+      if (nodemailer) {
+        console.log(`[EMAIL FUNCTION] Dispatching receipt to ${custEmail} via Gmail SMTP (${gmailUser})...`);
+        const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: {
+            user: gmailUser,
+            pass: gmailPass
+          }
+        });
 
-  // Add store email copy if verified sender or different email
-  if (storeEmail && storeEmail !== custEmail && !resendFrom.includes('onboarding@resend.dev')) {
-    resendPayload.bcc = [storeEmail];
+        const info = await transporter.sendMail({
+          from: `"${storeName}" <${gmailUser}>`,
+          to: custEmail,
+          replyTo: storeEmail || gmailUser,
+          subject: subject,
+          html: htmlContent,
+          text: textFallback
+        });
+
+        console.log(`[EMAIL FUNCTION] ✅ Gmail SMTP dispatched successfully! Message ID: ${info.messageId}`);
+        return {
+          statusCode: 200,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({
+            success: true,
+            mode: 'gmail_smtp',
+            message_id: info.messageId,
+            recipient: custEmail,
+            tracking_url: trackUrl,
+            message: 'Order confirmation receipt sent directly to customer via Gmail.'
+          })
+        };
+      }
+    } catch (smtpErr) {
+      console.error('[EMAIL FUNCTION] ❌ Gmail SMTP Error:', smtpErr.message || smtpErr);
+      if (!resendApiKey) {
+        return {
+          statusCode: 502,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({
+            success: false,
+            error: `Gmail SMTP Error: ${smtpErr.message || smtpErr}`,
+            tracking_url: trackUrl
+          })
+        };
+      }
+    }
   }
 
-  // 9. Dispatch to Resend API
-  try {
-    console.log(`[EMAIL FUNCTION] Dispatching receipt to ${custEmail} via Resend...`);
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(resendPayload)
-    });
+  // 9. Dispatch to Resend API if API Key is configured
+  if (resendApiKey) {
+    const resendPayload = {
+      from: resendFrom,
+      to: [custEmail],
+      reply_to: storeEmail,
+      subject: subject,
+      html: htmlContent,
+      text: textFallback
+    };
 
-    const resData = await resendResponse.json();
+    if (storeEmail && storeEmail !== custEmail && !resendFrom.includes('onboarding@resend.dev')) {
+      resendPayload.bcc = [storeEmail];
+    }
 
-    if (resendResponse.ok && resData && resData.id) {
-      console.log(`[EMAIL FUNCTION] ✅ Resend Email dispatched successfully! Email ID: ${resData.id}`);
+    try {
+      console.log(`[EMAIL FUNCTION] Dispatching receipt to ${custEmail} via Resend...`);
+      const resendResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(resendPayload)
+      });
+
+      const resData = await resendResponse.json();
+
+      if (resendResponse.ok && resData && resData.id) {
+        console.log(`[EMAIL FUNCTION] ✅ Resend Email dispatched successfully! Email ID: ${resData.id}`);
+        return {
+          statusCode: 200,
+          headers: CORS_HEADERS,
+          body: JSON.stringify({
+            success: true,
+            email_id: resData.id,
+            recipient: custEmail,
+            tracking_url: trackUrl,
+            message: 'Order confirmation receipt sent successfully via Resend.'
+          })
+        };
+      }
+
+      console.error('[EMAIL FUNCTION] ❌ Resend API Error:', resData);
+      const errorMsg = resData?.message || resData?.error || 'Resend failed to accept the email.';
       return {
-        statusCode: 200,
+        statusCode: resendResponse.status || 502,
         headers: CORS_HEADERS,
         body: JSON.stringify({
-          success: true,
-          email_id: resData.id,
-          recipient: custEmail,
-          tracking_url: trackUrl,
-          message: 'Order confirmation receipt sent successfully via Resend.'
+          success: false,
+          error: `Resend API Error: ${errorMsg}`,
+          tracking_url: trackUrl
+        })
+      };
+    } catch (networkErr) {
+      console.error('[EMAIL FUNCTION] ❌ Network Error contacting Resend API:', networkErr.message || networkErr);
+      return {
+        statusCode: 500,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          success: false,
+          error: 'Internal Server Error: Unable to contact Resend email service.',
+          tracking_url: trackUrl
         })
       };
     }
-
-    // Resend returned an error response (e.g. 401, 403, 422)
-    console.error('[EMAIL FUNCTION] ❌ Resend API Error:', resData);
-    const errorMsg = resData?.message || resData?.error || 'Resend failed to accept the email.';
-    const errorCode = resData?.name || 'RESEND_API_ERROR';
-
-    return {
-      statusCode: resendResponse.status || 502,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        success: false,
-        error: `Resend API Error: ${errorMsg}`,
-        error_code: errorCode,
-        tracking_url: trackUrl
-      })
-    };
-  } catch (networkErr) {
-    console.error('[EMAIL FUNCTION] ❌ Network Error contacting Resend API:', networkErr.message || networkErr);
-    return {
-      statusCode: 500,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({
-        success: false,
-        error: 'Internal Server Error: Unable to contact Resend email service.',
-        tracking_url: trackUrl
-      })
-    };
   }
 };
